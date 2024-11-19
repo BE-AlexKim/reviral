@@ -10,9 +10,7 @@ group = "tech.server"
 version = "0.0.1-SNAPSHOT"
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+	sourceCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -20,6 +18,10 @@ repositories {
 }
 
 dependencies {
+	implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+	implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
