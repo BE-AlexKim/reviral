@@ -10,20 +10,22 @@ import java.time.LocalDateTime
  * fileName       : Campaign
  * author         : joy58
  * date           : 2024-11-19
- * description    :
+ * description    : 캠페인
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
  * 2024-11-19        joy58       최초 생성
  */
 @Entity
+@Table(name = "tb_campaign_info")
 data class Campaign(
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "campaign_id")
-    val id: Long,
+    val id: Long? = null,
 
     @Column(name = "campaign_status")
+    @Enumerated(EnumType.STRING)
     val status: CampaignStatus,
 
     @Column(name = "campaign_category")
@@ -35,9 +37,6 @@ data class Campaign(
 
     @Column(name = "campaign_title")
     val title: String,
-
-    @Column(name = "campaign_url")
-    val url: String,
 
     @Column(name = "campaign_img_url")
     val imgUrl: String,

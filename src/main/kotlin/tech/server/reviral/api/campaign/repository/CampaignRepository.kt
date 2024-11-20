@@ -16,6 +16,6 @@ import tech.server.reviral.api.campaign.model.entity.Campaign
  * 2024-11-19        joy58       최초 생성
  */
 @Repository
-interface CampaignRepository: JpaRepository<Long, Campaign> {
+interface CampaignRepository: JpaRepository<Campaign, Long> {
 
 }
