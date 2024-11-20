@@ -18,4 +18,26 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    defer-datasource-initialization: true
+    show-sql: false
+    properties:
+      hibernate:
+        show_sql: true #SQL 로그 설정
+        format_sql: true #SQL 포맷 설정
+        use_sql_comments: true #SQL 코멘트 사용
+  jwt:
+    key-algorithms: HS256
+    secret-key: N5UPZEWGCWohYLUAwm1p_a5k1pJ1coz0f98XrtTB85E
+    expiration:
+      access-time: 60000
+      refresh-time: 180000
+#  sql:
+#    init:
+#      mode: always
 
