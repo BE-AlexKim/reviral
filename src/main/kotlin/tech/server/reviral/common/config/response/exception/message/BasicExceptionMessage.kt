@@ -22,8 +22,9 @@ object BasicExceptionMessage {
     const val TOKEN_ERROR = ""
     const val REFRESH_TOKEN_NOT_EXIST = ""
     const val TOKEN_NOT_MATCH = ""
-    const val USER_NOT_MATCH = ""
-    const val UNAUTHORIZED = ""
-    const val DEFAULT = ""
+    const val USER_NOT_MATCH = "사용자가 일치하지 않습니다."
+    const val UNAUTHORIZED = "인증되지 않은 사용자입니다."
+    const val DEFAULT = "서버 오류"
+    const val USER_NOT_EXIST = "사용자가 존재하지 않습니다."
 
 }

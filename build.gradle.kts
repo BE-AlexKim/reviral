@@ -21,6 +21,10 @@ repositories {
 
 dependencies {
 
+	// Kotlin Logging
+	implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
+
+	// JSON
 	implementation("com.googlecode.json-simple:json-simple:1.1.1")
 
 	// 스프링 라이브러리

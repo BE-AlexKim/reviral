@@ -1,6 +1,7 @@
 package tech.server.reviral.common.config.response.success
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import java.time.LocalDateTime
@@ -16,6 +17,7 @@ import java.time.LocalDateTime
  * -----------------------------------------------------------
  * 2024-11-20        joy58       최초 생성
  */
+@Schema(name = "공통 응답 객체")
 class WrapResponseEntity<T>(
     val status: Int = 200,
     val data: MutableMap<String,T>,
