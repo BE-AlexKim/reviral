@@ -12,6 +12,8 @@ import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.account.repository.AccountRepository
+import tech.server.reviral.common.config.response.exception.BasicException
+import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.security.JwtToken
 import tech.server.reviral.common.config.security.JwtTokenProvider
 
@@ -32,16 +34,13 @@ class AccountService constructor(
     private val authenticationManagerBuilder: AuthenticationManagerBuilder,
     private val jwtTokenProvider: JwtTokenProvider,
     private val passwordEncoder: PasswordEncoder
-): UserDetailsService{
+) {
 
     @Transactional
-    @Throws(UsernameNotFoundException::class)
-    override fun loadUserByUsername(username: String?): UserDetails? {
-        try {
-            return accountRepository.findByLoginId(username)
-        }catch ( e: UsernameNotFoundException ) {
-            throw UsernameNotFoundException("ERROR :: User not found.")
-        }
+    @Throws(BasicException::class)
+    fun loadUserByUsername(username: String?): User {
+        return accountRepository.findByLoginId(username)
+            ?: throw BasicException(BasicError.USER_NOT_EXIST)
     }
 
     @Transactional
@@ -52,10 +51,11 @@ class AccountService constructor(
         val authenticationToken = UsernamePasswordAuthenticationToken(request.loginId, request.password )
         // 인증 객체 생성
         val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
-        // 인증 객체를 통한 토큰 생성
-        val token = jwtTokenProvider.getJwtToken(authentication)
+        // 인증 객체에서 사용자 정보 객체로 변환
+        val user = authentication.principal as User
+        // 사용자 정보 객체로 변환 후, 토큰 생성
+        return jwtTokenProvider.getJwtToken(user)
 
-        return token
     }
 
     @Transactional

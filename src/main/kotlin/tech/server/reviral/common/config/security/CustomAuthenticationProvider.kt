@@ -31,11 +31,11 @@ class CustomAuthenticationProvider(
 
         val user = accountService.loadUserByUsername(username)
 
-        if ( !passwordEncoder.matches(password, user?.password ) ) {
+        if ( !passwordEncoder.matches(password, user.password ) ) {
             throw BadCredentialsException("아이디 또는 비밀번호가 일치하지 않습니다.")
         }
 
-        return UsernamePasswordAuthenticationToken(user, password, user?.authorities )
+        return UsernamePasswordAuthenticationToken(user, password, user.authorities )
     }
 
     override fun supports(authentication: Class<*>?): Boolean {
