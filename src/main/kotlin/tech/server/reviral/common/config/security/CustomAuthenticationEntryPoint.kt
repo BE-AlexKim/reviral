@@ -28,7 +28,7 @@ class CustomAuthenticationEntryPoint: AuthenticationEntryPoint {
 
     override fun commence(request: HttpServletRequest?, response: HttpServletResponse?, authException: AuthenticationException?) {
         val error = request?.getAttribute("exception") as BasicError?
-            ?: BasicError.UNAUTHORIZED
+            ?: BasicError.DEFAULT
 
         sendError(error, response)
 
