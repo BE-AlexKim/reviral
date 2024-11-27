@@ -59,11 +59,12 @@ class SecurityConfig(
                 "/v3/api-docs/**",
                 "/swagger-resources/**"
             ).permitAll()
+            it.anyRequest().authenticated()
         }
 
         http.exceptionHandling {
-            it.authenticationEntryPoint(CustomAuthenticationEntryPoint()) //TODO 해당 클래스 구현해야 함
-            it.accessDeniedHandler(CustomAccessDeniedHandler()) //TODO 해당 클래스 구현해야 함
+            it.authenticationEntryPoint(CustomAuthenticationEntryPoint())
+            it.accessDeniedHandler(CustomAccessDeniedHandler())
         }
 
         http.addFilterBefore(
