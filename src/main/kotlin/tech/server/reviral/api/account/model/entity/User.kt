@@ -4,6 +4,9 @@ import jakarta.persistence.*
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
+import tech.server.reviral.api.account.model.enums.Gender
+import tech.server.reviral.api.account.model.enums.UserRole
+import java.time.LocalDateTime
 
 /**
  *packageName    : tech.server.reviral.api.account.model.entity
@@ -18,7 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails
  */
 @Entity
 @Table(name = "tb_user_info")
-data class User(
+class User(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     val id: Long? = null,
@@ -29,8 +32,12 @@ data class User(
     @Column(name = "login_pw")
     val loginPw: String,
 
-    @Column(name = "point_pw")
-    val pointPw: String,
+    @Column(name = "name")
+    val name: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_gender")
+    val gender: Gender,
 
     @Column(name = "phone_number")
     val phone: String,
@@ -38,13 +45,29 @@ data class User(
     @Column(name = "address")
     val address: String,
 
-    @Column(name = "user_role")
-    val auth: String
+    @Column(name = "point_pw")
+    val pointPw: String? = null,
 
-): UserDetails {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_role")
+    val auth: UserRole,
+
+    @Column(name = "is_account_non_locked")
+    val isUserNonLocked: Boolean = true,
+
+    @Column(name = "is_credential_non_expired")
+    val isPasswordNonExpired: Boolean = true,
+
+    @Column(name = "is_enabled")
+    val isBlackListed: Boolean = true,
+
+    @Column(name = "created_at")
+    val createdAt: LocalDateTime = LocalDateTime.now()
+
+    ): UserDetails {
 
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-        return mutableListOf(SimpleGrantedAuthority(auth))
+        return mutableListOf(SimpleGrantedAuthority(auth.name))
     }
 
     override fun getPassword(): String {
@@ -54,6 +77,16 @@ data class User(
     override fun getUsername(): String {
         return loginId
     }
-
-
+    // 잠긴 계쩡 여부
+    override fun isAccountNonLocked(): Boolean {
+        return isUserNonLocked
+    }
+    // 비밀번호 재설정 기간 만료 여부
+    override fun isCredentialsNonExpired(): Boolean {
+        return isPasswordNonExpired
+    }
+    // 블랙리스트 계쩡 여부
+    override fun isEnabled(): Boolean {
+        return isBlackListed
+    }
 }

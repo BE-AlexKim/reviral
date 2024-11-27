@@ -1,16 +1,15 @@
 package tech.server.reviral.api.account.service
 
+import jakarta.persistence.Basic
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
-import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
 import tech.server.reviral.api.account.model.entity.User
+import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
@@ -44,6 +43,12 @@ class AccountService constructor(
     }
 
     @Transactional
+    @Throws(BasicException::class)
+    fun isLoginIdDuplicated(loginId: String): Boolean {
+        return accountRepository.existsUserByLoginId(loginId)
+    }
+
+    @Transactional
     @Throws(Exception::class)
     fun getJwtToken(request: SignInRequestDTO): JwtToken {
 
@@ -61,16 +66,22 @@ class AccountService constructor(
     @Transactional
     @Throws(Exception::class)
     fun signUp( request: SignUpRequestDTO ): Boolean {
-        accountRepository.save(
-            User(
-                loginId = request.loginId,
-                loginPw = passwordEncoder.encode(request.loginPw),
-                pointPw = passwordEncoder.encode(request.pointPw),
-                address = request.address,
-                phone = request.phoneNumber,
-                auth = request.userRole
+
+        if ( !isLoginIdDuplicated(request.loginId) ) { // 중복아이디가 존재하지 않을 경우
+            accountRepository.save(
+                User(
+                    loginId = request.loginId,
+                    loginPw = passwordEncoder.encode(request.loginPw),
+                    gender = request.gender,
+                    name = request.username,
+                    address = request.address,
+                    phone = request.phoneNumber,
+                    auth = UserRole.ROLE_REVIEWER
+                )
             )
-        )
-        return true
+            return true
+        }else {
+            throw BasicException(BasicError.USER_NOT_MATCH)
+        }
     }
 }

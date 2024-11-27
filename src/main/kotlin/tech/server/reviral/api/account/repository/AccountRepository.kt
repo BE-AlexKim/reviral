@@ -20,4 +20,6 @@ interface AccountRepository: JpaRepository<User, Long> {
 
     fun findByLoginId(loginId: String?): User?
 
+    fun existsUserByLoginId(loginId: String): Boolean
+
 }

@@ -1,6 +1,7 @@
 package tech.server.reviral.api.account.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -38,7 +39,7 @@ class AccountController constructor(
     }
 
     @PostMapping("/sign-up")
-    fun signUp(@RequestBody request: SignUpRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
+    fun signUp(@RequestBody @Valid request: SignUpRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
         val signUp = accountService.signUp(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "signUp", signUp)
     }
