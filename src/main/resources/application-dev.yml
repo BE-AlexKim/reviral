@@ -1,0 +1,47 @@
+server:
+  port: 9093
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  application:
+    name: Reviral
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/reviral
+    username: root
+    password: rlgus585
+    hikari:
+      maximum-pool-size: 10
+      connection-test-query: SELECT 1
+      idle-timeout: 30000
+      minimum-idle: 2
+      connection-timeout: 10000
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    defer-datasource-initialization: true
+    show-sql: false
+    properties:
+      hibernate:
+        show_sql: true #SQL 로그 설정
+        format_sql: true #SQL 포맷 설정
+        use_sql_comments: true #SQL 코멘트 사용
+    open-in-view: false
+  jwt:
+    key-algorithms: HS256
+    secret-key: N5UPZEWGCWohYLUAwm1p_a5k1pJ1coz0f98XrtTB85E
+    expiration:
+      access-time: 60000
+      refresh-time: 180000
+#  sql:
+#    init:
+#      mode: always
+
