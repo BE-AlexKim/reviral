@@ -95,7 +95,8 @@ class AccountService constructor(
                     phone = request.phoneNumber,
                     auth = UserRole.ROLE_REVIEWER,
                     nvId = request.nvId,
-                    cpId = request.cpId
+                    cpId = request.cpId,
+                    isEvent = request.isEvent
                 )
             )
             return true
