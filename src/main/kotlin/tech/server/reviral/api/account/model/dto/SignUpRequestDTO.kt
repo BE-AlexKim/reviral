@@ -37,18 +37,20 @@ data class SignUpRequestDTO(
     @Schema(description = "성별")
     val gender: Gender,
 
-    @field:Pattern(regexp = "^01[016789]\\\\d{7,8}\$", message = "휴대전화번호 형식이 맞지 않습니다.")
+    @field:Pattern(regexp = "^01[016789]\\d{7,8}\$", message = "휴대전화번호 형식이 맞지 않습니다.")
     @Schema(description = "휴대폰 번호")
     val phoneNumber: String,
 
     @Schema(description = "주소")
     val address: String,
 
-    @Schema(description = "N사 아이디")
-    val nId: String,
+    @Schema(description = "N사 아이디", example = "dowpp32")
+    val nvId: String? = null,
 
-    @Schema(description = "C사 아이디")
-    val cId: String
+    @Schema(description = "C사 아이디", example = "eow32@gmail.com")
+    val cpId: String? = null,
 
+    @Schema(description = "이벤트 수신 동의", example = "true")
+    val isEvent: Boolean = true
 
 )

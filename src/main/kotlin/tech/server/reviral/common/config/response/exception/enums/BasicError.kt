@@ -34,9 +34,11 @@ enum class BasicError(
     TOKEN_ERROR(HttpStatus.UNAUTHORIZED, "BE0007", BasicExceptionMessage.TOKEN_ERROR),
     REFRESH_TOKEN_NOT_EXIST(HttpStatus.UNAUTHORIZED,"BE0008", BasicExceptionMessage.REFRESH_TOKEN_NOT_EXIST),
     TOKEN_NOT_MATCH(HttpStatus.UNAUTHORIZED, "BE0009", BasicExceptionMessage.TOKEN_NOT_MATCH),
-    USER_NOT_MATCH(HttpStatus.UNAUTHORIZED, "BE0010", BasicExceptionMessage.USER_NOT_MATCH),
+    USER_NOT_MATCH(HttpStatus.BAD_REQUEST, "BE0010", BasicExceptionMessage.USER_NOT_MATCH),
     USER_NOT_EXIST(HttpStatus.BAD_REQUEST,"BE0011", BasicExceptionMessage.USER_NOT_EXIST),
     USERNAME_DUPLICATED(HttpStatus.BAD_REQUEST,"BE0012", BasicExceptionMessage.USERNAME_DUPLICATED),
+    USER_CREDENTIALS_NOT_MATCH(HttpStatus.BAD_REQUEST, "BE0013", BasicExceptionMessage.USER_CREDENTIALS_NOT_MATCH),
+    USER_ALREADY_EXIST(HttpStatus.BAD_REQUEST,"BE0014",BasicExceptionMessage.USER_ALREADY_EXIST),
 
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E00002", BasicExceptionMessage.UNAUTHORIZED);
     override fun getCode(): String {

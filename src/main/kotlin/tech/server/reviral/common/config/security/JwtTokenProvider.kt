@@ -10,7 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import tech.server.reviral.api.account.model.entity.User
-import tech.server.reviral.api.account.service.AccountService
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import java.nio.charset.StandardCharsets
@@ -40,7 +39,8 @@ class JwtTokenProvider(
     @Value("\${spring.jwt.expiration.refresh-time}")
     private var refreshExpiredTime: Long,
 
-    private val customUserDetailsService: CustomUserDetailsService
+    private val customUserDetailsService: CustomUserDetailsService,
+    private val jwtRedisRepository: JwtRedisRepository
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -55,9 +55,11 @@ class JwtTokenProvider(
             "typ" to "JWT", "alg" to algorithm
         )
 
+        val userId = user.id!!.toString()
+
         val accessToken = Jwts.builder()
             .setHeader(header)
-            .setSubject(user.id!!.toString())
+            .setSubject(userId)
             .setIssuer("RE:VIRAL.CO")
             .setIssuedAt(issuedAt)
             .claim("username",user.loginId)
@@ -70,6 +72,8 @@ class JwtTokenProvider(
             .setExpiration(refreshTokenExpiredDate)
             .signWith(key, SignatureAlgorithm.HS256)
             .compact()
+
+        jwtRedisRepository.set(userId, refreshToken, refreshExpiredTime)
 
         return JwtToken(
             accessToken = accessToken,
@@ -96,7 +100,7 @@ class JwtTokenProvider(
         return UsernamePasswordAuthenticationToken(userDetails,userDetails?.password,userDetails?.authorities)
     }
 
-
+    @Throws(BasicException::class)
     fun validateToken(request: HttpServletRequest, accessToken: String): Authentication {
         try {
             log.info { accessToken }
@@ -125,4 +129,11 @@ class JwtTokenProvider(
         }
     }
 
+    fun decryptClaims(token: String): Optional<Claims> {
+        return try {
+            Optional.of(Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).body)
+        }catch (e: ExpiredJwtException) {
+            Optional.empty<Claims>()
+        }
+    }
 }

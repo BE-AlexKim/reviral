@@ -48,4 +48,5 @@ class CustomAuthenticationEntryPoint: AuthenticationEntryPoint {
         response?.characterEncoding = Charsets.UTF_8.toString()
         response?.writer?.print(json)
     }
+
 }

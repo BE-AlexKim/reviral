@@ -52,6 +52,15 @@ class User(
     @Column(name = "user_role")
     val auth: UserRole,
 
+    @Column(name = "nv_id")
+    val nvId: String? = null,
+
+    @Column(name = "cp_id")
+    val cpId: String? = null,
+
+    @Column(name = "is_event")
+    val isEvent: Boolean = false,
+
     @Column(name = "is_account_non_locked")
     val isUserNonLocked: Boolean = true,
 

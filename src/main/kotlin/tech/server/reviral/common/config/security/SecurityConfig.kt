@@ -1,7 +1,10 @@
 package tech.server.reviral.common.config.security
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
@@ -11,6 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.filter.CorsFilter
 
 /**
  *packageName    : tech.server.reviral.common.config.security
@@ -28,6 +34,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityConfig(
     private val jwtTokenProvider: JwtTokenProvider
 ) {
+
+    @Value("\${spring.http.cors.allowed-origins}")
+    private lateinit var origins: List<String>
 
     @Bean
     fun passwordEncoder(): BCryptPasswordEncoder {
@@ -47,7 +56,9 @@ class SecurityConfig(
             // URL Permit
             it.requestMatchers(
                 "/api/v1/users/sign-in",
-                "/api/v1/users/sign-up"
+                "/api/v1/users/sign-up",
+                "/api/v1/users/id-check",
+                "/api/v1/users/reload"
             ).permitAll()
             // Resource Permit
             it.requestMatchers(
@@ -72,6 +83,27 @@ class SecurityConfig(
             UsernamePasswordAuthenticationFilter::class.java
         )
 
+        http.addFilterBefore(
+            corsFilter(),
+            JwtAuthenticationFilter(jwtTokenProvider)::class.java
+        )
+
         return http.build()
+    }
+
+    @Bean(name = ["CorsFilter"])
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    fun corsFilter(): CorsFilter {
+        val config = CorsConfiguration()
+        config.allowCredentials = true
+        config.allowedOrigins = origins
+        config.allowedMethods = listOf("*")
+        config.allowedHeaders = listOf("*")
+        config.exposedHeaders = listOf("*")
+
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**",config)
+
+        return CorsFilter(source)
     }
 }

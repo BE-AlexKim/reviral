@@ -21,6 +21,9 @@ repositories {
 
 dependencies {
 
+	// Redis
+	implementation("org.springframework.boot:spring-boot-starter-data-redis:3.3.5")
+
 	// Kotlin Logging
 	implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
 

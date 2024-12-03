@@ -11,39 +11,41 @@ import java.lang.annotation.Inherited
 
 /**
  *packageName    : tech.server.reviral.common.config.docs.account
- * fileName       : SignUpExplain
+ * fileName       : SignInExplain
  * author         : joy58
- * date           : 2024-11-27
+ * date           : 2024-11-28
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2024-11-27        joy58       최초 생성
+ * 2024-11-28        joy58       최초 생성
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @Operation(
-    summary = "사용자 회원가입",
-    description = "회원가입 시, 사용자 정보를 요청하여 회원 정보를 등록한다.",
+    summary = "사용자 로그인",
+    description = "아이디와 패스워드를 받아 로그인 토큰을 발급한다.",
     requestBody = RequestBody(
-        description = "회원 정보를 등록합니다.",
+        description = "사용자 로그인",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "회원가입 정보 예시",
+                        name = "회원가입 테스트 계정 - 김기현",
                         value = """
                                 {
-                                  "loginId": "reviral001",
-                                  "loginPw": "Reviral001#",
-                                  "username": "홍길동",
-                                  "gender": "MAN",
-                                  "phoneNumber": "01012341234",
-                                  "address": "서울특별시 중랑구 공릉로12가길 15 지하1층",
-                                  "nId": "joy585",
-                                  "cId": "rpp0321@gmail.com"
+                                  "loginId" : "rpp0321",
+                                  "password" : "rlgus585"
+                                }
+                        """
+                    ),ExampleObject(
+                        name = "회원가입 테스트 계정 - 이윤승",
+                        value = """
+                                {
+                                  "loginId" : "hpppower111",
+                                  "password" : "asdfQWER12#$"
                                 }
                         """
                     )
@@ -66,7 +68,9 @@ import java.lang.annotation.Inherited
                             {
                                 "status": 200,
                                 "data": {
-                                    
+                                    "grantType": "Bearer",
+                                    "accessToken": "엑세스 토큰",
+                                    "refreshToken": "리프레시 토큰"
                                 },
                                 "timestamp": "2024-11-27 23:59:59"
                             }
@@ -89,19 +93,19 @@ import java.lang.annotation.Inherited
                         value = """
                             {
                                 "status": 400,
-                                "code": "",
-                                "message": "",
+                                "code": "BE0011",
+                                "message": "사용자가 존재하지 않습니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
-                    ),ExampleObject(
+                    ), ExampleObject(
                         name = "",
                         description = "",
                         value = """
                             {
                                 "status": 400,
-                                "code": "",
-                                "message": "",
+                                "code": "BE0013",
+                                "message": ""비밀번호가 일치하지 않습니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
@@ -109,7 +113,7 @@ import java.lang.annotation.Inherited
                 ]
             )
         ]
-    ),ApiResponse(
+    ), ApiResponse(
         responseCode = "500",
         description = "INTERNAL_SERVER_ERROR",
         content = [
@@ -133,4 +137,4 @@ import java.lang.annotation.Inherited
         ]
     )
 )
-annotation class AnnotationSample()
+annotation class SignInExplain()

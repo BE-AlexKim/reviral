@@ -11,21 +11,21 @@ import java.lang.annotation.Inherited
 
 /**
  *packageName    : tech.server.reviral.common.config.docs.account
- * fileName       : SignUpExplain
+ * fileName       : JwtReloadExplain
  * author         : joy58
- * date           : 2024-11-27
+ * date           : 2024-11-28
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2024-11-27        joy58       최초 생성
+ * 2024-11-28        joy58       최초 생성
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @Operation(
-    summary = "사용자 회원가입",
-    description = "회원가입 시, 사용자 정보를 요청하여 회원 정보를 등록한다.",
+    summary = "사용자 재인증",
+    description = "사용자 재인증 토큰으로 새로운 토큰을 발급한다.",
     requestBody = RequestBody(
         description = "회원 정보를 등록합니다.",
         content = [
@@ -33,17 +33,11 @@ import java.lang.annotation.Inherited
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "회원가입 정보 예시",
+                        name = "재발급 테스트 - 01",
                         value = """
                                 {
-                                  "loginId": "reviral001",
-                                  "loginPw": "Reviral001#",
-                                  "username": "홍길동",
-                                  "gender": "MAN",
-                                  "phoneNumber": "01012341234",
-                                  "address": "서울특별시 중랑구 공릉로12가길 15 지하1층",
-                                  "nId": "joy585",
-                                  "cId": "rpp0321@gmail.com"
+                                  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiaXNzIjoiUkU6VklSQUwuQ08iLCJpYXQiOjE3MzI3ODU3OTcsInVzZXJuYW1lIjoicnBwMDMyMSIsInJvbGVzIjoiUk9MRV9BRE1JTiIsImV4cCI6MTczMjc5Mjk5N30.Jh57RS2o9aMS2iywkJ-OGIh4CkHgJUIv06twTuAWpho",
+                                  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjYyMjEyNzg1Nzk3fQ.VTdZRWmbKnz4YqE1aPHZAFU7b2_0XBWF1PdhAZMyQHc"
                                 }
                         """
                     )
@@ -66,7 +60,9 @@ import java.lang.annotation.Inherited
                             {
                                 "status": 200,
                                 "data": {
-                                    
+                                    "grantType": "Bearer",
+                                    "accessToken": "엑세스 토큰",
+                                    "refreshToken": "리프레시 토큰"
                                 },
                                 "timestamp": "2024-11-27 23:59:59"
                             }
@@ -77,8 +73,8 @@ import java.lang.annotation.Inherited
         ]
     ),
     ApiResponse(
-        responseCode = "400",
-        description = "BAD_REQUEST",
+        responseCode = "401",
+        description = "UNAUTHORIZED",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -88,20 +84,31 @@ import java.lang.annotation.Inherited
                         description = "",
                         value = """
                             {
-                                "status": 400,
-                                "code": "",
-                                "message": "",
+                                "status": 401,
+                                "code": "BE0008",
+                                "message": "만료된 접근입니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
-                    ),ExampleObject(
-                        name = "",
-                        description = "",
+                    ), ExampleObject(
+                        name = "재발급 토큰 불일치 오류",
+                        description = "리프레시 토큰 불일치",
                         value = """
                             {
-                                "status": 400,
-                                "code": "",
-                                "message": "",
+                                "status": 401,
+                                "code": "BE0009",
+                                "message": "잘못된 접근입니다.",
+                                "timestamp": "2024-11-27 23:59:59"
+                            }
+                        """
+                    ), ExampleObject(
+                        name = "존재하지 않는 토큰",
+                        description = "엑세스 토큰이 존재하지 않을 경우 발생합니다.",
+                        value = """
+                            {
+                                "status": 401,
+                                "code": "BE0007",
+                                "message": "잘못된 접근입니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
@@ -109,7 +116,7 @@ import java.lang.annotation.Inherited
                 ]
             )
         ]
-    ),ApiResponse(
+    ), ApiResponse(
         responseCode = "500",
         description = "INTERNAL_SERVER_ERROR",
         content = [
@@ -133,4 +140,4 @@ import java.lang.annotation.Inherited
         ]
     )
 )
-annotation class AnnotationSample()
+annotation class JwtReloadExplain()

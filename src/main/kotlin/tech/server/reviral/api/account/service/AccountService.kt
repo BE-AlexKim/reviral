@@ -1,11 +1,11 @@
 package tech.server.reviral.api.account.service
 
-import jakarta.persistence.Basic
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tech.server.reviral.api.account.model.dto.ReloadRequestDTO
 import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
 import tech.server.reviral.api.account.model.entity.User
@@ -13,8 +13,10 @@ import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
+import tech.server.reviral.common.config.security.JwtRedisRepository
 import tech.server.reviral.common.config.security.JwtToken
 import tech.server.reviral.common.config.security.JwtTokenProvider
+import java.util.UUID
 
 /**
  * packageName    : tech.server.reviral.api.account.service
@@ -32,7 +34,8 @@ class AccountService constructor(
     private val accountRepository: AccountRepository,
     private val authenticationManagerBuilder: AuthenticationManagerBuilder,
     private val jwtTokenProvider: JwtTokenProvider,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val jwtRedisRepository: JwtRedisRepository
 ) {
 
     @Transactional
@@ -42,15 +45,25 @@ class AccountService constructor(
             ?: throw BasicException(BasicError.USER_NOT_EXIST)
     }
 
+    /**
+     * 아이디 중복체크 서비스
+     * @param loginId
+     * @return Boolean
+     */
     @Transactional
     @Throws(BasicException::class)
     fun isLoginIdDuplicated(loginId: String): Boolean {
         return accountRepository.existsUserByLoginId(loginId)
     }
 
+    /**
+     * 로그인 서비스
+     * @param request SignInRequestDTO
+     * @return JwtToken
+     */
     @Transactional
     @Throws(Exception::class)
-    fun getJwtToken(request: SignInRequestDTO): JwtToken {
+    fun signIn(request: SignInRequestDTO): JwtToken {
 
         // UsernamePasswordAuthenticationToken 발급
         val authenticationToken = UsernamePasswordAuthenticationToken(request.loginId, request.password )
@@ -60,9 +73,13 @@ class AccountService constructor(
         val user = authentication.principal as User
         // 사용자 정보 객체로 변환 후, 토큰 생성
         return jwtTokenProvider.getJwtToken(user)
-
     }
 
+    /**
+     * 리뷰어 회원가입 서비스
+     * @param request: SignUpRequestDTO
+     * @return Boolean
+     */
     @Transactional
     @Throws(Exception::class)
     fun signUp( request: SignUpRequestDTO ): Boolean {
@@ -76,12 +93,40 @@ class AccountService constructor(
                     name = request.username,
                     address = request.address,
                     phone = request.phoneNumber,
-                    auth = UserRole.ROLE_REVIEWER
+                    auth = UserRole.ROLE_REVIEWER,
+                    nvId = request.nvId,
+                    cpId = request.cpId
                 )
             )
             return true
         }else {
-            throw BasicException(BasicError.USER_NOT_MATCH)
+            throw BasicException(BasicError.USER_ALREADY_EXIST)
+        }
+    }
+
+    /**
+     * 토큰 재발급 서비스
+     * @param accessToken: String,
+     * @param enteredRefreshToken: String
+     * @return JwtToken
+     */
+    @Transactional
+    @Throws(BasicException::class)
+    fun reloadUserByRefreshToken( request: ReloadRequestDTO ): JwtToken {
+        val isEnableAccessToken = jwtTokenProvider.decryptClaims(request.accessToken)
+        if ( isEnableAccessToken.isEmpty ) { // 공백일 경우
+            throw BasicException(BasicError.TOKEN_ERROR)
+        }else {
+            val claims = isEnableAccessToken.get() // Claims 정보 조회
+            val cachedRefreshToken = jwtRedisRepository.get(claims.subject)
+                ?: throw BasicException(BasicError.EXPIRED_REFRESH_TOKEN)
+
+            if (cachedRefreshToken == request.refreshToken) { // 재발급 토큰 비교값이 동일할 경우
+                val username = claims["loginId"].toString()
+                return jwtTokenProvider.getJwtToken(loadUserByUsername(username))
+            }else {
+                throw BasicException(BasicError.TOKEN_NOT_MATCH)
+            }
         }
     }
 }

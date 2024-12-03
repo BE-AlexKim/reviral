@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.MediaType
+import tech.server.reviral.common.config.response.exception.enums.BasicError
+import tech.server.reviral.common.config.response.exception.message.BasicExceptionMessage
 import java.lang.annotation.Inherited
 
 /**
@@ -42,8 +44,9 @@ import java.lang.annotation.Inherited
                                   "gender": "MAN",
                                   "phoneNumber": "01012341234",
                                   "address": "서울특별시 중랑구 공릉로12가길 15 지하1층",
-                                  "nId": "joy585",
-                                  "cId": "rpp0321@gmail.com"
+                                  "nvId": "joy585",
+                                  "cpId": "rpp0321@gmail.com",
+                                  "isEvent": true
                                 }
                         """
                     )
@@ -66,7 +69,7 @@ import java.lang.annotation.Inherited
                             {
                                 "status": 200,
                                 "data": {
-                                    
+                                    "signUp": true
                                 },
                                 "timestamp": "2024-11-27 23:59:59"
                             }
@@ -84,24 +87,79 @@ import java.lang.annotation.Inherited
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "",
-                        description = "",
+                        name = "비밀번호 유효성 - 01",
+                        description = "비밀번호 값은 필수값입니다.",
                         value = """
                             {
                                 "status": 400,
-                                "code": "",
-                                "message": "",
+                                "code": "HV000033",
+                                "message": "비밀번호를 입력해주세요.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
                     ),ExampleObject(
-                        name = "",
-                        description = "",
+                        name = "비밀번호 유효성 - 02",
+                        description = "비밀번호 형식이 일치하지 않습니다.",
                         value = """
                             {
                                 "status": 400,
-                                "code": "",
-                                "message": "",
+                                "code": "HV000033",
+                                "message": "비밀번호 형식이 맞지 않습니다.",
+                                "timestamp": "2024-11-27 23:59:59"
+                            }
+                        """
+                    ),ExampleObject(
+                        name = "아이디 유효성 - 01",
+                        description = "아이디는 필수값입니다.",
+                        value = """
+                            {
+                                "status": 400,
+                                "code": "HV000033",
+                                "message": "아이디를 입력해주세요.",
+                                "timestamp": "2024-11-27 23:59:59"
+                            }
+                        """
+                    ),ExampleObject(
+                        name = "아이디 유효성 - 02",
+                        description = "대문자는 입력할 수 없습니다.",
+                        value = """
+                            {
+                                "status": 400,
+                                "code": "HV000033",
+                                "message": "영문 대문자는 포함할 수 없습니다.",
+                                "timestamp": "2024-11-27 23:59:59"
+                            }
+                        """
+                    ),ExampleObject(
+                        name = "아이디 유효성 - 03",
+                        description = "아이디가 형식에 맞지 않습니다.",
+                        value = """
+                            {
+                                "status": 400,
+                                "code": "HV000033",
+                                "message": "아이디는 영문 숫자 4-16자 사이로 입력해주세요.",
+                                "timestamp": "2024-11-27 23:59:59"
+                            }
+                        """
+                    ),ExampleObject(
+                        name = "휴대전화 유효성 - 01",
+                        description = "휴대전화번호 형식이 맞지 않습니다.",
+                        value = """
+                            {
+                                "status": 400,
+                                "code": "HV000033",
+                                "message": "휴대전화번호 형식이 맞지 않습니다.",
+                                "timestamp": "2024-11-27 23:59:59"
+                            }
+                        """
+                    ),ExampleObject(
+                        name = "이름 유효성 - 01",
+                        description = "이름 형식이 알맞지 않습니다.",
+                        value = """
+                            {
+                                "status": 400,
+                                "code": "HV000033",
+                                "message": "이름 형식이 맞지 않습니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
@@ -117,8 +175,8 @@ import java.lang.annotation.Inherited
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "",
-                        description = "",
+                        name = BasicExceptionMessage.DEFAULT,
+                        description = BasicExceptionMessage.DEFAULT,
                         value = """
                             {
                                 "status": 500,
@@ -133,4 +191,4 @@ import java.lang.annotation.Inherited
         ]
     )
 )
-annotation class AnnotationSample()
+annotation class SignUpExplain()

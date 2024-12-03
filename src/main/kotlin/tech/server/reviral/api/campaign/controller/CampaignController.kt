@@ -2,6 +2,7 @@ package tech.server.reviral.api.campaign.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -9,8 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import tech.server.reviral.api.campaign.service.CampaignService
+import tech.server.reviral.common.config.response.success.WrapResponseEntity
 
 /**
  *packageName    : tech.server.reviral.api.campaign.controller
@@ -34,16 +37,16 @@ class CampaignController constructor(
      * 캠페인 정보 다건 조회
      */
     @GetMapping
-    fun getCampaigns() {
-
+    fun getCampaigns():ResponseEntity<WrapResponseEntity<Boolean>> {
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "hello", true)
     }
 
     /**
      * 캠페인 정보 단건 조회
      */
     @GetMapping("/{campaignId}")
-    fun getCampaign(@PathVariable campaignId: Long) {
-
+    fun getCampaign(@PathVariable campaignId: Long): ResponseEntity<WrapResponseEntity<Boolean>> {
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "hello", true)
     }
 
     /**

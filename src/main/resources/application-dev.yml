@@ -35,12 +35,34 @@ spring:
         format_sql: true #SQL 포맷 설정
         use_sql_comments: true #SQL 코멘트 사용
     open-in-view: false
+  data:
+    redis:
+      port: 6379
+      host: localhost # 로컬 테스트 시에는 localhost cloud 서버에서는 redis
+      password: rlgus585
+      lettuce:
+        pool:
+          max-active: 10
+          min-idle: 1
+          max-idle: 5
   jwt:
     key-algorithms: HS256
     secret-key: N5UPZEWGCWohYLUAwm1p_a5k1pJ1coz0f98XrtTB85E
     expiration:
-      access-time: 60000
-      refresh-time: 180000
+      access-time: 7200000 # 2시간
+      refresh-time: 60480000000000 # 7일간
+  http:
+    cors:
+      allowed-origins:
+        http://localhost:3001,
+        http://localhost:3000,
+        http://localhost:9093,
+        http://172.30.1.117:3000,
+        http://172.30.1.117:3001,
+        http://172.30.1.113:9093,
+        http://14.53.24.5:9093,
+        http://172.30.1.68:9093
+
 #  sql:
 #    init:
 #      mode: always
