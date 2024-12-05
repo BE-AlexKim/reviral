@@ -2,17 +2,15 @@ package tech.server.reviral.api.campaign.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import tech.server.reviral.api.campaign.model.dto.SaveCampaignRequestDTO
+import tech.server.reviral.api.campaign.model.entity.Campaign
 import tech.server.reviral.api.campaign.service.CampaignService
+import tech.server.reviral.common.config.docs.campaign.SaveCampaignExplain
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 
 /**
@@ -37,8 +35,15 @@ class CampaignController constructor(
      * 캠페인 정보 다건 조회
      */
     @GetMapping
-    fun getCampaigns():ResponseEntity<WrapResponseEntity<Boolean>> {
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "hello", true)
+    fun getCampaigns(
+        @RequestParam category: String?,
+        @RequestParam platform: String?,
+        @RequestParam campaignId: Long?,
+        @RequestParam status: String?,
+        pageable: Pageable
+    ):ResponseEntity<WrapResponseEntity<Page<Campaign>>> {
+        val search = campaignService.searchCampaigns(category, platform, status, campaignId, pageable)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "data", search)
     }
 
     /**
@@ -53,8 +58,10 @@ class CampaignController constructor(
      * 캠페인 정보 저장
      */
     @PostMapping("/save")
-    fun save(@RequestBody hello: String): ResponseEntity<String> {
-        return ResponseEntity.ok("OK")
+    @SaveCampaignExplain
+    fun save(@RequestBody request: SaveCampaignRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val save = campaignService.setCampaign(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", save)
     }
 
     /**
