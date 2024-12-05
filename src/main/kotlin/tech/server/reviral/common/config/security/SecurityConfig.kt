@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
@@ -53,7 +54,12 @@ class SecurityConfig(
         http.sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
 
         http.authorizeHttpRequests {
-            // URL Permit
+            // Campaign URL Permit
+            it.requestMatchers(
+                HttpMethod.GET,"/api/v1/campaign"
+            ).permitAll()
+
+            // User URL Permit
             it.requestMatchers(
                 "/api/v1/users/sign-in",
                 "/api/v1/users/sign-up",
@@ -70,6 +76,9 @@ class SecurityConfig(
                 "/v3/api-docs/**",
                 "/swagger-resources/**"
             ).permitAll()
+            it.requestMatchers(
+                HttpMethod.POST,"/api/v1/campaign/save"
+            ).hasAuthority("ROLE_ADMIN")
             it.anyRequest().authenticated()
         }
 

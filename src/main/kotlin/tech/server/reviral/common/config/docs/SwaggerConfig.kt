@@ -51,7 +51,7 @@ class SwaggerConfig {
 
         return OpenAPI()
             .addServersItem(Server().url("http://localhost:9093"))
-            .addServersItem(Server().url("http://api.server.reviral.kr"))
+            .addServersItem(Server().url("http://api-server.reviral.kr"))
             .components(securityComponents())
             .addSecurityItem(securityRequirement)
             .info(apiInfo())

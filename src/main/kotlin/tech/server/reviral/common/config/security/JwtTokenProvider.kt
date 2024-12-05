@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.common.config.response.exception.BasicException
@@ -95,9 +96,22 @@ class JwtTokenProvider(
         }
     }
 
+    @Throws(BasicException::class)
     fun getAuthentication(token: String): Authentication {
-        val userDetails = customUserDetailsService.loadUserByUsername(token)
-        return UsernamePasswordAuthenticationToken(userDetails,userDetails?.password,userDetails?.authorities)
+        // 인증토큰 복호화
+        val isClaims = decryptClaims(token)
+
+        if ( isClaims.isEmpty ) {
+            throw BasicException(BasicError.AUTH_IS_NOT_EMPTY)
+        }else {
+            val claims = isClaims.get()
+            val password = ""
+            val authorities = listOf(
+                SimpleGrantedAuthority(claims["roles"].toString())
+            )
+            val principal = org.springframework.security.core.userdetails.User(claims.subject, password, authorities)
+            return UsernamePasswordAuthenticationToken(principal, password, authorities)
+        }
     }
 
     @Throws(BasicException::class)

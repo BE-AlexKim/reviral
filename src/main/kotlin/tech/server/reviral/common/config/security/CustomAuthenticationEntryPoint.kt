@@ -3,6 +3,7 @@ package tech.server.reviral.common.config.security
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.json.simple.JSONObject
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.AuthenticationEntryPoint
@@ -28,7 +29,7 @@ class CustomAuthenticationEntryPoint: AuthenticationEntryPoint {
 
     override fun commence(request: HttpServletRequest?, response: HttpServletResponse?, authException: AuthenticationException?) {
         val error = request?.getAttribute("exception") as BasicError?
-            ?: BasicError.DEFAULT
+            ?: BasicError.UNAUTHORIZED
 
         sendError(error, response)
 
