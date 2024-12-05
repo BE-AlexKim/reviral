@@ -1,7 +1,10 @@
 package tech.server.reviral.api.campaign.model.entity
 
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import tech.server.reviral.api.campaign.model.enums.CampaignCategory
+import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
 import tech.server.reviral.api.campaign.model.enums.CampaignStatus
 import java.time.LocalDateTime
 
@@ -24,51 +27,33 @@ data class Campaign(
     @Column(name = "campaign_id")
     val id: Long? = null,
 
-    @Column(name = "campaign_status")
     @Enumerated(EnumType.STRING)
-    val status: CampaignStatus,
-
-    @Column(name = "campaign_category")
-    @Enumerated(EnumType.STRING)
-    val category: CampaignCategory,
-
     @Column(name = "campaign_platform")
-    val platform: String,
+    val campaignPlatform: CampaignPlatform,
 
     @Column(name = "campaign_title")
-    val title: String,
+    val campaignTitle: String,
 
-    @Column(name = "campaign_img_url")
-    val imgUrl: String,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "campaign_category")
+    val campaignCategory: CampaignCategory,
 
-    @Column(name = "campaign_link")
-    val link: String,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "campaign_status")
+    val campaignStatus: CampaignStatus,
 
-    @Column(name = "campaign_price")
-    val price: Int,
-
-    @Column(name = "campaign_point")
-    val point: Int,
-
-    @Column(name = "recruit_count")
-    val recruitCount: Int,
-
-    @Column(name = "close_count")
-    val closeCount: Int,
-
-    @Column(name = "recruit_date")
-    val recruitDate: LocalDateTime,
-
-    @Column(name = "close_date")
-    val closeDate: LocalDateTime,
-
-    @Column(name = "open_date")
-    val openDate: LocalDateTime,
+    @Column(name = "request_company")
+    val companyName: String,
 
     @Column(name = "create_at")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     val createAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "update_at")
-    val updateAt: LocalDateTime? = null
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    val updateAt: LocalDateTime? = null,
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    val details: MutableList<CampaignDetails> = mutableListOf()
 )
