@@ -33,7 +33,7 @@ spring:
       hibernate:
         show_sql: true #SQL 로그 설정
         format_sql: true #SQL 포맷 설정
-        use_sql_comments: true #SQL 코멘트 사용
+        use_sql_comments: false #SQL 코멘트 사용
     open-in-view: false
   data:
     redis:
@@ -61,7 +61,8 @@ spring:
         http://172.30.1.117:3001,
         http://172.30.1.113:9093,
         http://14.53.24.5:9093,
-        http://172.30.1.68:9093
+        http://172.30.1.68:9093,
+        http://172.30.1.113:9093,
 
 #  sql:
 #    init:

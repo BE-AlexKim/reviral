@@ -2,6 +2,7 @@ package tech.server.reviral.api.campaign.model.entity
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import tech.server.reviral.api.campaign.model.enums.OptionType
 import java.time.LocalDateTime
 
@@ -27,6 +28,9 @@ data class CampaignOptions(
     @JoinColumn(name = "campaign_id")
     val campaign: Campaign,
 
+    @OneToMany(mappedBy="campaignOptions",fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    val subOptions: List<CampaignSubOptions> = emptyList(),
+
     @Column(name = "option_title")
     val title: String,
 
@@ -47,4 +51,19 @@ data class CampaignOptions(
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     val updateAt: LocalDateTime? = null
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as CampaignOptions
+
+        return id != null && id == other.id
+    }
+
+    override fun hashCode(): Int = javaClass.hashCode()
+
+    @Override
+    override fun toString(): String {
+        return this::class.simpleName + "(id = $id , title = $title , optionType = $optionType , recruitPeople = $recruitPeople , order = $order , createAt = $createAt , updateAt = $updateAt )"
+    }
+}

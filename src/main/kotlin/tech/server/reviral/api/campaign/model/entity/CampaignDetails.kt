@@ -3,6 +3,8 @@ package tech.server.reviral.api.campaign.model.entity
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
+import org.hibernate.Hibernate
+import org.hibernate.annotations.Comment
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -18,14 +20,14 @@ import java.time.LocalDateTime
  * 2024-12-03        joy58       최초 생성
  */
 @Entity
-@Table(name = "tb_campany_details")
+@Table(name = "tb_campaign_details")
+@Comment("캠페인 상세 정보 테이블")
 data class CampaignDetails(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "campaign_details_id")
     val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    @JsonIgnore
     @JoinColumn(name = "campaign_id")
     val campaign: Campaign,
 
@@ -68,7 +70,7 @@ data class CampaignDetails(
     @Column(name = "active_count")
     val activeCount: Long,
 
-    @Column(name = "seller_request")
+    @Column(name = "seller_request", columnDefinition = "TEXT")
     val sellerRequest: String,
 
     @Column(name = "create_at")
@@ -78,4 +80,19 @@ data class CampaignDetails(
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     val updateAt: LocalDateTime? = null
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as CampaignDetails
+
+        return id != null && id == other.id
+    }
+
+    override fun hashCode(): Int = javaClass.hashCode()
+
+    @Override
+    override fun toString(): String {
+        return this::class.simpleName + "(id = $id , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyCount = $dailyCount , startTime = $startTime , endTime = $endTime , totalCount = $totalCount , optionCount = $optionCount , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , activeCount = $activeCount , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
+    }
+}

@@ -1,5 +1,6 @@
 package tech.server.reviral.api.campaign.controller
 
+import com.querydsl.core.Tuple
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
 import org.springframework.data.domain.Page
@@ -7,10 +8,14 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
+import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
 import tech.server.reviral.api.campaign.model.dto.SaveCampaignRequestDTO
 import tech.server.reviral.api.campaign.model.entity.Campaign
 import tech.server.reviral.api.campaign.service.CampaignService
 import tech.server.reviral.common.config.docs.campaign.SaveCampaignExplain
+import tech.server.reviral.common.config.docs.campaign.SearchCampaignDetailsExplain
+import tech.server.reviral.common.config.docs.campaign.SearchCampaignExplain
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 
 /**
@@ -35,23 +40,26 @@ class CampaignController constructor(
      * 캠페인 정보 다건 조회
      */
     @GetMapping
+    @SearchCampaignExplain
     fun getCampaigns(
         @RequestParam category: String?,
         @RequestParam platform: String?,
-        @RequestParam campaignId: Long?,
         @RequestParam status: String?,
-        pageable: Pageable
-    ):ResponseEntity<WrapResponseEntity<Page<Campaign>>> {
-        val search = campaignService.searchCampaigns(category, platform, status, campaignId, pageable)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "data", search)
+        @RequestParam page: Long?,
+        @RequestParam size: Long?,
+    ):ResponseEntity<WrapResponseEntity<List<CampaignCardResponseDTO>>> {
+        val search = campaignService.searchCampaigns(category, platform, status, page, size)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "campaigns", search)
     }
 
     /**
      * 캠페인 정보 단건 조회
      */
     @GetMapping("/{campaignId}")
-    fun getCampaign(@PathVariable campaignId: Long): ResponseEntity<WrapResponseEntity<Boolean>> {
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "hello", true)
+    @SearchCampaignDetailsExplain
+    fun getCampaign(@PathVariable campaignId: Long): ResponseEntity<WrapResponseEntity<List<CampaignDetailResponseDTO>>> {
+        val campaign = campaignService.getCampaign(campaignId)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "campaign", campaign)
     }
 
     /**

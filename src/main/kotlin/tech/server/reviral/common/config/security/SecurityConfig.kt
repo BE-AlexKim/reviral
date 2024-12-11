@@ -56,7 +56,13 @@ class SecurityConfig(
         http.authorizeHttpRequests {
             // Campaign URL Permit
             it.requestMatchers(
-                HttpMethod.GET,"/api/v1/campaign"
+                HttpMethod.GET,
+                "/api/v1/campaign",
+                "/api/v1/campaign/{campaignId}"
+            ).permitAll()
+
+            it.requestMatchers(
+                HttpMethod.POST,"/api/v1/campaign/save"
             ).permitAll()
 
             // User URL Permit

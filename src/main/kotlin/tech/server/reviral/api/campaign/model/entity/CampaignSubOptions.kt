@@ -1,9 +1,9 @@
 package tech.server.reviral.api.campaign.model.entity
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import java.time.LocalDateTime
 
 /**
@@ -26,9 +26,12 @@ data class CampaignSubOptions(
     val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    @JsonIgnore
     @JoinColumn(name = "campaign_options_id")
     val campaignOptions: CampaignOptions? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "campaign_id")
+    val campaign: Campaign? = null,
 
     @Column(name = "option_title")
     val title: String,
@@ -50,4 +53,19 @@ data class CampaignSubOptions(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     val updateAt: LocalDateTime? = null
 
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as CampaignSubOptions
+
+        return id != null && id == other.id
+    }
+
+    override fun hashCode(): Int = javaClass.hashCode()
+
+    @Override
+    override fun toString(): String {
+        return this::class.simpleName + "(id = $id , title = $title , recruitPeople = $recruitPeople , addPrice = $addPrice , order = $order , createAt = $createAt , updateAt = $updateAt )"
+    }
+}

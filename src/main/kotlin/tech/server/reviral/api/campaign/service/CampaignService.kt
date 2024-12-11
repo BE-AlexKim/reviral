@@ -1,22 +1,39 @@
 package tech.server.reviral.api.campaign.service
 
+import com.querydsl.core.BooleanBuilder
+import com.querydsl.core.Tuple
+import com.querydsl.core.group.GroupBy.groupBy
+import com.querydsl.core.group.GroupBy.list
+import com.querydsl.core.types.ExpressionUtils
+import com.querydsl.core.types.Projections
+import com.querydsl.core.types.dsl.CaseBuilder
+import com.querydsl.core.types.dsl.Expressions
+import com.querydsl.jpa.JPAExpressions
+import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
+import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
 import tech.server.reviral.api.campaign.model.dto.SaveCampaignRequestDTO
 import tech.server.reviral.api.campaign.model.entity.Campaign
 import tech.server.reviral.api.campaign.model.entity.CampaignDetails
 import tech.server.reviral.api.campaign.model.entity.CampaignOptions
 import tech.server.reviral.api.campaign.model.entity.CampaignSubOptions
+import tech.server.reviral.api.campaign.model.entity.QCampaign
+import tech.server.reviral.api.campaign.model.entity.QCampaignDetails
+import tech.server.reviral.api.campaign.model.entity.QCampaignOptions
+import tech.server.reviral.api.campaign.model.entity.QCampaignSubOptions
+import tech.server.reviral.api.campaign.model.enums.CampaignCategory
+import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
 import tech.server.reviral.api.campaign.model.enums.CampaignStatus
 import tech.server.reviral.api.campaign.model.enums.OptionType
 import tech.server.reviral.api.campaign.repository.CampaignDetailsRepository
 import tech.server.reviral.api.campaign.repository.CampaignOptionsRepository
 import tech.server.reviral.api.campaign.repository.CampaignRepository
 import tech.server.reviral.api.campaign.repository.CampaignSubOptionsRepository
-import tech.server.reviral.api.campaign.repository.specification.CampaignSpecification
 import tech.server.reviral.common.config.response.exception.CampaignException
 import tech.server.reviral.common.config.response.exception.enums.CampaignError
 import java.time.LocalDate
@@ -38,12 +55,19 @@ class CampaignService constructor(
     private val campaignRepository: CampaignRepository,
     private val campaignDetailsRepository: CampaignDetailsRepository,
     private val campaignOptionsRepository: CampaignOptionsRepository,
-    private val campaignSubOptionsRepository: CampaignSubOptionsRepository
+    private val campaignSubOptionsRepository: CampaignSubOptionsRepository,
+    private val queryFactory: JPAQueryFactory
 ){
 
 
     /**
      * 구매 캠페인 정보 조회
+     * @param category: String?
+     * @param platform: String?
+     * @param status: String?
+     * @param offset: Long?,
+     * @param limit: Long?
+     * @return List<CampaignCardResponseDTO>
      */
     @Transactional
     @Throws(CampaignException::class)
@@ -51,61 +75,185 @@ class CampaignService constructor(
         category: String?,
         platform: String?,
         status: String?,
-        campaignId: Long?,
-        pageable: Pageable
-    ): Page<Campaign> {
+        offset: Long?,
+        limit: Long?
+    ): List<CampaignCardResponseDTO> {
 
-        when(category) {
-            // 오늘 오픈한 캠페인 목록 조회
-            "today" -> {
-                var spec = Specification.where(CampaignSpecification.betweenActiveDate())
+        val qCampaign = QCampaign.campaign
+        val qCampaignDetails = QCampaignDetails.campaignDetails
 
-                if ( platform != null ) {
-                    spec = spec.and(CampaignSpecification.platformContains(platform))
-                }
+        val booleanBuilder = BooleanBuilder()
 
-                if ( status != null ) {
-                    spec = spec.and(CampaignSpecification.equalCampaignStatus(status))
+        // 추가 조건
+        if (status != null) { // 카테고리
+            when(status) {
+                "wait" -> { booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.WAIT))}
+                "progress" -> {
+                    booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.PROGRESS))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
                 }
-                return campaignRepository.findAll(spec, pageable)
-            }
-            // 마감임박 캠페인 목록 조회
-            "deadline" -> {
-                var spec = Specification.where(CampaignSpecification.betweenFinishDate())
-
-                if ( platform != null ) {
-                    spec = spec.and(CampaignSpecification.platformContains(platform))
-                }
-
-                if ( status != null ) {
-                    spec = spec.and(CampaignSpecification.equalCampaignStatus(status))
-                }
-                return campaignRepository.findAll(spec, pageable)
-            }
-            "time","daily" -> {
-                var spec = Specification.where(CampaignSpecification.equalCampaignCategory(category))
-                if ( platform != null ) {
-                    spec = spec.and(CampaignSpecification.platformContains(platform))
-                }
-
-                if ( status != null ) {
-                    spec = spec.and(CampaignSpecification.equalCampaignStatus(status))
-                }
-                return campaignRepository.findAll(spec, pageable)
-            }
-            else -> {
-                throw CampaignException("카테고리에 정보가 없습니다.")
+                "finish" -> { booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.FINISH))}
+                "recruitment" -> { booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.RECRUITMENT))}
             }
         }
+
+        if (platform != null) { // 플랫폼
+            when(platform) {
+                "nv" -> {
+                    booleanBuilder.and(qCampaign.campaignPlatform.eq(CampaignPlatform.NAVER))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                }
+                "cp" -> {
+                    booleanBuilder.and(qCampaign.campaignPlatform.eq(CampaignPlatform.COUPANG))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                }
+                "et" -> {
+                    booleanBuilder.and(qCampaign.campaignPlatform.eq(CampaignPlatform.ETC))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                }
+            }
+        }
+
+        if (category != null) {
+            when(category) {
+                "time" -> {
+                    booleanBuilder.and(qCampaign.campaignCategory.eq(CampaignCategory.TIME))
+                }
+                "daily" -> {
+                    booleanBuilder.and(qCampaign.campaignCategory.eq(CampaignCategory.DAILY))
+                }
+                "deadline" -> {
+                    booleanBuilder.and(qCampaignDetails.finishDate.eq(LocalDate.now()))
+                }
+                "today" -> {
+                    booleanBuilder.and(qCampaignDetails.activeDate.eq(LocalDate.now()))
+                }
+            }
+        }
+
+        // 순차정렬 enum 커스텀
+        val order = CaseBuilder()
+            .`when`(qCampaign.campaignStatus.eq(CampaignStatus.PROGRESS)).then(0)
+            .`when`(qCampaign.campaignStatus.eq(CampaignStatus.WAIT)).then(1)
+            .`when`(qCampaign.campaignStatus.eq(CampaignStatus.FINISH)).then(2)
+            .otherwise(3)
+
+        return queryFactory
+            .select(
+                Projections.fields(
+                    CampaignCardResponseDTO::class.java,
+                    qCampaign.id.`as`("campaignId"),
+                    qCampaign.campaignTitle.`as`("campaignTitle"),
+                    qCampaign.campaignPlatform.`as`("campaignPlatform"),
+                    qCampaignDetails.campaignImgUrl.`as`("campaignImgUrl"),
+                    qCampaignDetails.reviewPoint.`as`("campaignPoint"),
+                    qCampaignDetails.totalCount.`as`("totalCount"),
+                    qCampaignDetails.campaignPrice.`as`("campaignPrice"),
+                    qCampaign.campaignStatus.`as`("campaignStatus")
+                )
+            )
+            .from(qCampaign)
+            .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
+            .where(booleanBuilder)
+            .orderBy(qCampaign.createAt.desc())
+            .offset(offset ?: 0)
+            .limit(limit ?: 10)
+            .orderBy(order.asc())
+            .fetch()
+
     }
 
     /**
      * 당일구매 캠페인 목록 정보 조회
+     * @param campaignId: Long
      */
     @Transactional
     @Throws(CampaignException::class)
-    fun getDailyCampaigns() {
+    fun getCampaign(campaignId: Long): List<CampaignDetailResponseDTO> {
 
+        val qCampaign = QCampaign.campaign
+        val qCampaignDetails = QCampaignDetails.campaignDetails
+        val qCampaignOptions = QCampaignOptions.campaignOptions
+        val qCampaignSubOptions = QCampaignSubOptions.campaignSubOptions
+
+        val query = queryFactory
+            .select(
+                Projections.constructor(
+                    CampaignDetailResponseDTO::class.java,
+                    qCampaignDetails.id.`as`("campaignDetailsId"),
+                    qCampaign.campaignTitle.`as`("campaignTitle"),
+                    qCampaign.campaignCategory.`as`("campaignCategory"),
+                    qCampaignDetails.campaignUrl.`as`("campaignUrl"),
+                    qCampaignDetails.campaignImgUrl.`as`("campaignImgUrl"),
+                    qCampaignDetails.campaignPrice.`as`("campaignPrice"),
+                    qCampaignDetails.reviewPoint.`as`("campaignPoint"),
+                    qCampaignDetails.sellerRequest.`as`("sellerRequest"),
+                    qCampaignDetails.totalCount.`as`("totalCount"),
+                    Expressions.asNumber(0).`as`("joinCount"),
+                    Projections.list(
+                        Projections.constructor(
+                            CampaignDetailResponseDTO.Options::class.java,
+                            qCampaignOptions.id.`as`("campaignOptionsId"),
+                            qCampaignOptions.title.`as`("optionTitle"),
+                            Projections.list(
+                                Projections.constructor(
+                                    CampaignDetailResponseDTO.SubOptions::class.java,
+                                    qCampaignSubOptions.id.`as`("campaignSubOptionsId"),
+                                    qCampaignSubOptions.addPrice.`as`("campaignAddPrice"),
+                                    qCampaignSubOptions.title.`as`("campaignSubOptionTitle"),
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            .from(qCampaign)
+            .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
+            .join(qCampaignOptions).on(qCampaignOptions.campaign.id.eq(qCampaignDetails.campaign.id))
+            .leftJoin(qCampaignSubOptions).on(qCampaignSubOptions.campaignOptions.id.eq(qCampaignOptions.id))
+            .where(qCampaign.id.eq(campaignId))
+            .groupBy(
+                qCampaignDetails.id,
+                qCampaign.id,
+                qCampaignOptions.id,
+                qCampaignSubOptions.id
+            )
+            .fetch()
+
+        return query
+            .groupBy { it.campaignDetailsId }
+            .map { (_, campaigns) ->
+                val campaign = campaigns.first()
+
+                CampaignDetailResponseDTO(
+                    campaignDetailsId = campaign.campaignDetailsId,
+                    campaignTitle = campaign.campaignTitle,
+                    campaignCategory = campaign.campaignCategory,
+                    campaignUrl = campaign.campaignUrl,
+                    campaignImgUrl = campaign.campaignImgUrl,
+                    campaignPrice = campaign.campaignPrice,
+                    campaignPoint = campaign.campaignPoint,
+                    sellerRequest = campaign.sellerRequest,
+                    totalCount = campaign.totalCount,
+                    joinCount = campaign.joinCount,
+                    options = campaigns.flatMap { it.options }
+                        .groupBy { it!!.campaignOptionsId }
+                        .map { (_, options) ->
+                            val option = options.first()
+
+                            CampaignDetailResponseDTO.Options(
+                                campaignOptionsId = option!!.campaignOptionsId,
+                                optionTitle = option.optionTitle,
+                                subOptions = options.flatMap { it!!.subOptions }
+                                    .distinctBy { it?.campaignSubOptionsId }
+                            )
+                        }
+                )
+            }
     }
 
     /**

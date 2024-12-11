@@ -3,6 +3,7 @@ package tech.server.reviral.api.campaign.model.entity
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
+import org.hibernate.Hibernate
 import tech.server.reviral.api.campaign.model.enums.CampaignCategory
 import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
 import tech.server.reviral.api.campaign.model.enums.CampaignStatus
@@ -53,7 +54,29 @@ data class Campaign(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     val updateAt: LocalDateTime? = null,
 
-    @JsonIgnore
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    val details: MutableList<CampaignDetails> = mutableListOf()
-)
+    val details: MutableList<CampaignDetails> = mutableListOf(),
+
+    @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    val options: MutableList<CampaignDetails> = mutableListOf(),
+
+    @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    val subOptions: MutableList<CampaignSubOptions> = mutableListOf(),
+
+
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+        other as Campaign
+
+        return id != null && id == other.id
+    }
+
+    override fun hashCode(): Int = javaClass.hashCode()
+
+    @Override
+    override fun toString(): String {
+        return this::class.simpleName + "(id = $id , campaignPlatform = $campaignPlatform , campaignTitle = $campaignTitle , campaignCategory = $campaignCategory , campaignStatus = $campaignStatus , companyName = $companyName , createAt = $createAt , updateAt = $updateAt )"
+    }
+}
