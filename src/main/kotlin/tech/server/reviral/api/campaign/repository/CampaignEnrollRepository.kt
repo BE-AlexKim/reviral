@@ -3,7 +3,9 @@ package tech.server.reviral.api.campaign.repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
+import tech.server.reviral.api.campaign.model.entity.Campaign
 import tech.server.reviral.api.campaign.model.entity.CampaignEnroll
+import tech.server.reviral.api.campaign.model.entity.CampaignOptions
 import tech.server.reviral.api.campaign.model.entity.CampaignSubOptions
 
 /**
@@ -20,6 +22,8 @@ import tech.server.reviral.api.campaign.model.entity.CampaignSubOptions
 @Repository
 interface CampaignEnrollRepository: JpaRepository<CampaignEnroll, Long> {
 
-    fun existsBySubOptions(subOption: CampaignSubOptions): Boolean
+    fun existsByCampaign(campaign: Campaign): Boolean
+
+    fun findByCampaign(campaign: Campaign): List<CampaignEnroll?>
 
 }

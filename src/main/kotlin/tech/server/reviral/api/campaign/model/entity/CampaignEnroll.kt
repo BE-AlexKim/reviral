@@ -36,6 +36,11 @@ data class CampaignEnroll(
     val user: User? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "campaign_id")
+    @Comment("캠페인 일련번호")
+    val campaign: Campaign? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "campaign_options_id")
     @Comment("캠페인 옵션 일련번호")
     val options: CampaignOptions? = null,

@@ -1,22 +1,23 @@
 package tech.server.reviral
 
-import com.querydsl.core.group.GroupBy
-import com.querydsl.core.group.GroupBy.list
+import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.Expressions
+import com.querydsl.jpa.JPAExpressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
+import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
 import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
 import tech.server.reviral.api.campaign.model.entity.QCampaign
 import tech.server.reviral.api.campaign.model.entity.QCampaignDetails
+import tech.server.reviral.api.campaign.model.entity.QCampaignEnroll
 import tech.server.reviral.api.campaign.model.entity.QCampaignOptions
 import tech.server.reviral.api.campaign.model.entity.QCampaignSubOptions
 import java.time.LocalDate
-import java.util.Locale
 
 /**
  *packageName    : tech.server.reviral
@@ -39,17 +40,54 @@ class JPAQuerydslTest(
     @Test
     @Transactional
     fun findByCampaignTest() {
-        val qTableCampaign = QCampaign.campaign
-        val qTableCampaignDetails = QCampaignDetails.campaignDetails
+        val qCampaign = QCampaign.campaign
+        val qCampaignDetails = QCampaignDetails.campaignDetails
+        val qCampaignEnroll = QCampaignEnroll.campaignEnroll
 
-        val join = queryFactory
-            .select(qTableCampaign.campaignTitle,qTableCampaignDetails)
-            .from(qTableCampaign)
-            .join(qTableCampaignDetails).on(qTableCampaignDetails.campaign.id.eq(qTableCampaign.id))
-            .where(qTableCampaignDetails.activeDate.before(LocalDate.now()))
-            .where(qTableCampaignDetails.finishDate.after(LocalDate.now()))
+        val query = queryFactory
+            .select(
+                Projections.fields(
+                    CampaignCardResponseDTO::class.java,
+                    qCampaign.id.`as`("campaignId"),
+                    qCampaign.campaignTitle.`as`("campaignTitle"),
+                    qCampaign.campaignStatus.`as`("campaignStatus"),
+                    qCampaign.campaignPlatform.`as`("campaignPlatform"),
+                    qCampaignDetails.campaignImgUrl.`as`("campaignImgUrl"),
+                    qCampaignDetails.reviewPoint.`as`("campaignPoint"),
+                    qCampaignDetails.totalCount.`as`("totalCount"),
+                    qCampaignDetails.campaignPrice.`as`("campaignPrice"),
+                    Expressions.numberTemplate(
+                        Long::class.java,
+                        "DATEDIFF({0}, {1})",
+                        qCampaignDetails.finishDate,
+                        LocalDate.now()
+                    ).`as`("period"),
+                    ExpressionUtils.`as`(
+                        JPAExpressions
+                            .select(qCampaignEnroll.count())
+                            .from(qCampaignEnroll)
+                            .where(
+                                qCampaignEnroll.options.campaign.id.eq(qCampaign.id) // 동일한 campaignId 확인
+                            ),
+                        "joinCount"
+                    )
+                )
+            )
+            .from(qCampaign)
+            .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
+            .leftJoin(qCampaignEnroll).on(qCampaignEnroll.options.campaign.id.eq(qCampaign.id))
+            .orderBy(
+                Expressions.numberTemplate(
+                    Long::class.java,
+                    "DATEDIFF({0}, {1})",
+                    qCampaignDetails.finishDate,
+                    LocalDate.now()
+                ).asc()
+            )
             .fetch()
-        println(join)
+
+
+        println("QUERY ::::: $query")
     }
 
     @DisplayName("Query TEST")

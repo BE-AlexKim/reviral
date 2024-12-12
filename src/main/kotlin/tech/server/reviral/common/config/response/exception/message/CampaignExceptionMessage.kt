@@ -12,6 +12,8 @@ package tech.server.reviral.common.config.response.exception.message
  * 2024-12-03        joy58       최초 생성
  */
 object CampaignExceptionMessage {
+    const val SUB_OPTION_IS_NOT_EMPTY = "존재하지 않는 하위옵션 값입니다."
+    const val CAMPAIGN_NOT_COMPLETED = "해당 캠페인을 진행중인 것이 있습니다."
     const val CAMPAIGN_IS_NOT_EXIST = "해당 캠페인이 존재하지 않습니다."
     const val OPTION_IS_NOT_EMPTY = "옵션 값이 존재하지 않습니다."
     const val START_DATE_SET = "캠페인 시작일과 종료일은 시작일이 이 더 빨라야합니다."

@@ -17,7 +17,7 @@ import tech.server.reviral.api.campaign.model.enums.CampaignCategory
 @Schema(name = "캠페인 상세정보 응답 모델")
 data class CampaignDetailResponseDTO(
     @Schema(description = "캠페인 상세 일련번호")
-    val campaignDetailsId: Long? = null,
+    val campaignId: Long? = null,
     @Schema(description = "캠페인 제목")
     val campaignTitle: String = "",
     @Schema(description = "캠페인 카테고리(당일구매,시간구매)")
@@ -35,7 +35,7 @@ data class CampaignDetailResponseDTO(
     @Schema(description = "캠페인 모집인원")
     val totalCount: Int = 0,
     @Schema(description = "캠페인 참여인원")
-    val joinCount: Int = 0,
+    val joinCount: Long = 0,
     @Schema(description = "옵션")
     var options: List<Options?> = listOf()
 ) {

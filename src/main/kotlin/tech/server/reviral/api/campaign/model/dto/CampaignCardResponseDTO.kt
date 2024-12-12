@@ -28,7 +28,7 @@ data class CampaignCardResponseDTO(
     @Schema(description = "캠페인 이미지 링크")
     val campaignImgUrl: String? = null,
     @Schema(description = "캠페인 마감기간")
-    val period: Int = 0,
+    val period: Long = 0,
     @Schema(description = "캠페인 상품가격")
     val campaignPrice: Int = 0,
     @Schema(description = "캠페인 포인트")
@@ -36,5 +36,5 @@ data class CampaignCardResponseDTO(
     @Schema(description = "캠페인 모집인원")
     val totalCount: Int = 0 ,
     @Schema(description = "캠페인 참여인원")
-    val joinCount: Int = 0,
+    val joinCount: Long = 0,
 )

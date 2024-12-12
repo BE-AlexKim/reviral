@@ -25,6 +25,8 @@ enum class CampaignError(
     private val code: String,
     private val message: String
 ): ExceptionMessageInitializer {
+    SUB_OPTION_IS_NOT_EMPTY(HttpStatus.BAD_REQUEST, "CP0006", CampaignExceptionMessage.SUB_OPTION_IS_NOT_EMPTY),
+    CAMPAIGN_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "CP0005", CampaignExceptionMessage.CAMPAIGN_NOT_COMPLETED),
     CAMPAIGN_IS_NOT_EXIST(HttpStatus.BAD_REQUEST, "CP0004", CampaignExceptionMessage.CAMPAIGN_IS_NOT_EXIST),
     OPTION_IS_NOT_EMPTY(HttpStatus.BAD_REQUEST,"CP0003", CampaignExceptionMessage.OPTION_IS_NOT_EMPTY),
     START_DATE_SET(HttpStatus.BAD_REQUEST, "CP0002", CampaignExceptionMessage.START_DATE_SET),

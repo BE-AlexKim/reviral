@@ -1,9 +1,11 @@
 package tech.server.reviral.api.campaign.service
 
 import com.querydsl.core.BooleanBuilder
+import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.Expressions
+import com.querydsl.jpa.JPAExpressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -63,20 +65,66 @@ class CampaignService constructor(
 
         val qCampaign = QCampaign.campaign
         val qCampaignDetails = QCampaignDetails.campaignDetails
+        val qCampaignEnroll = QCampaignEnroll.campaignEnroll
+
+        val now = LocalDate.now()
+
+        val query = queryFactory
+            .select(
+                Projections.fields(
+                    CampaignCardResponseDTO::class.java,
+                    qCampaign.id.`as`("campaignId"),
+                    qCampaign.campaignTitle.`as`("campaignTitle"),
+                    qCampaign.campaignStatus.`as`("campaignStatus"),
+                    qCampaign.campaignPlatform.`as`("campaignPlatform"),
+                    qCampaignDetails.campaignImgUrl.`as`("campaignImgUrl"),
+                    qCampaignDetails.reviewPoint.`as`("campaignPoint"),
+                    qCampaignDetails.totalCount.`as`("totalCount"),
+                    qCampaignDetails.campaignPrice.`as`("campaignPrice"),
+                    Expressions.numberTemplate(
+                        Long::class.java,
+                        "DATEDIFF({0}, {1})",
+                        qCampaignDetails.finishDate,
+                        Expressions.constant(LocalDate.now())
+                    ).`as`("period"),
+                    ExpressionUtils.`as`(
+                        JPAExpressions
+                            .select(qCampaignEnroll.count())
+                            .from(qCampaignEnroll)
+                            .where(
+                                qCampaignEnroll.options.campaign.id.eq(qCampaign.id) // 동일한 campaignId 확인
+                            ),
+                        "joinCount"
+                    )
+                )
+            )
+            .from(qCampaign)
+            .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
+            .leftJoin(qCampaignEnroll).on(qCampaignEnroll.options.campaign.id.eq(qCampaign.id))
 
         val booleanBuilder = BooleanBuilder()
 
         // 추가 조건
         if (status != null) { // 카테고리
             when(status) {
-                "wait" -> { booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.WAIT))}
+                "wait" -> {
+                    booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.WAIT))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                }
                 "progress" -> {
                     booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.PROGRESS))
                     booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
                     booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
                 }
-                "finish" -> { booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.FINISH))}
-                "recruitment" -> { booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.RECRUITMENT))}
+                "finish" -> {
+                    booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.FINISH))
+                }
+                "recruitment" -> {
+                    booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.RECRUITMENT))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                }
             }
         }
 
@@ -84,18 +132,12 @@ class CampaignService constructor(
             when(platform) {
                 "nv" -> {
                     booleanBuilder.and(qCampaign.campaignPlatform.eq(CampaignPlatform.NAVER))
-                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
-                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
                 }
                 "cp" -> {
                     booleanBuilder.and(qCampaign.campaignPlatform.eq(CampaignPlatform.COUPANG))
-                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
-                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
                 }
                 "et" -> {
                     booleanBuilder.and(qCampaign.campaignPlatform.eq(CampaignPlatform.ETC))
-                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
-                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
                 }
             }
         }
@@ -109,12 +151,67 @@ class CampaignService constructor(
                     booleanBuilder.and(qCampaign.campaignCategory.eq(CampaignCategory.DAILY))
                 }
                 "deadline" -> {
-                    booleanBuilder.and(qCampaignDetails.finishDate.eq(LocalDate.now()))
+                    booleanBuilder.and(
+                        qCampaignDetails.activeDate.loe(now)
+                            .and(qCampaignDetails.finishDate.goe(now))
+                    )
+
+                    return query
+                        .where(booleanBuilder)
+                        .offset(pageable.offset)
+                        .limit(pageable.pageSize.toLong())
+                        .orderBy(
+                            Expressions.numberTemplate(
+                                Long::class.java,
+                                "DATEDIFF({0}, {1})",
+                                qCampaignDetails.finishDate,
+                                Expressions.constant(LocalDate.now())
+                            ).asc()
+                        )
+                        .fetch()
                 }
                 "today" -> {
                     booleanBuilder.and(qCampaignDetails.activeDate.eq(LocalDate.now()))
                 }
+
+                "best" -> {
+
+                    booleanBuilder.and(
+                        qCampaignDetails.activeDate.loe(now)
+                            .and(qCampaignDetails.finishDate.goe(now))
+                    )
+
+                    return query
+                        .where(booleanBuilder)
+                        .limit(5)
+                        .orderBy( // 참여인원이 많은 순서
+                            Expressions.numberTemplate(
+                                Long::class.java,
+                                "{0}",
+                                JPAExpressions
+                                    .select(qCampaignEnroll.count())
+                                    .from(qCampaignEnroll)
+                                    .where(
+                                        qCampaignEnroll.options.campaign.id.eq(qCampaign.id) // 동일한 campaignId 확인
+                                    )
+                            ).desc().nullsLast(),
+                            Expressions.numberTemplate( // 마감일 기준
+                                Long::class.java,
+                                "DATEDIFF({0}, {1})",
+                                qCampaignDetails.finishDate,
+                                Expressions.constant(LocalDate.now())
+                            ).asc()
+                        )
+                        .fetch()
+                }
             }
+        }
+
+        if ( status != "finish" ) {
+            booleanBuilder.and(
+                qCampaignDetails.activeDate.loe(now)
+                    .and(qCampaignDetails.finishDate.goe(now))
+            )
         }
 
         // 순차정렬 enum 커스텀
@@ -124,32 +221,16 @@ class CampaignService constructor(
             .`when`(qCampaign.campaignStatus.eq(CampaignStatus.FINISH)).then(2)
             .otherwise(3)
 
-        return queryFactory
-            .select(
-                Projections.fields(
-                    CampaignCardResponseDTO::class.java,
-                    qCampaign.id.`as`("campaignId"),
-                    qCampaign.campaignTitle.`as`("campaignTitle"),
-                    qCampaign.campaignStatus.`as`("campaignStatus"),
-                    qCampaign.campaignPlatform.`as`("campaignPlatform"),
-                    qCampaignDetails.campaignImgUrl.`as`("campaignImgUrl"),
-                    qCampaignDetails.reviewPoint.`as`("campaignPoint"),
-                    qCampaignDetails.totalCount.`as`("totalCount"),
-                    qCampaignDetails.campaignPrice.`as`("campaignPrice"),
-                )
-            )
-            .from(qCampaign)
-            .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
+        return query
             .where(booleanBuilder)
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
             .orderBy(order.asc())
             .fetch()
-
     }
 
     /**
-     * 당일구매 캠페인 목록 정보 조회
+     * 캠페인 목록 정보 조회
      * @param campaignId: Long
      */
     @Transactional
@@ -160,12 +241,13 @@ class CampaignService constructor(
         val qCampaignDetails = QCampaignDetails.campaignDetails
         val qCampaignOptions = QCampaignOptions.campaignOptions
         val qCampaignSubOptions = QCampaignSubOptions.campaignSubOptions
+        val qCampaignEnroll = QCampaignEnroll.campaignEnroll
 
         val query = queryFactory
             .select(
                 Projections.constructor(
                     CampaignDetailResponseDTO::class.java,
-                    qCampaignDetails.id.`as`("campaignDetailsId"),
+                    qCampaign.id.`as`("campaignId"),
                     qCampaign.campaignTitle.`as`("campaignTitle"),
                     qCampaign.campaignCategory.`as`("campaignCategory"),
                     qCampaignDetails.campaignUrl.`as`("campaignUrl"),
@@ -174,7 +256,15 @@ class CampaignService constructor(
                     qCampaignDetails.reviewPoint.`as`("campaignPoint"),
                     qCampaignDetails.sellerRequest.`as`("sellerRequest"),
                     qCampaignDetails.totalCount.`as`("totalCount"),
-                    Expressions.asNumber(0).`as`("joinCount"),
+                    ExpressionUtils.`as`(
+                        JPAExpressions
+                            .select(qCampaignEnroll.count())
+                            .from(qCampaignEnroll)
+                            .where(
+                                qCampaignEnroll.options.campaign.id.eq(qCampaign.id) // 동일한 campaignId 확인
+                            ),
+                        "joinCount"
+                    ),
                     Projections.list(
                         Projections.constructor(
                             CampaignDetailResponseDTO.Options::class.java,
@@ -205,12 +295,12 @@ class CampaignService constructor(
             )
             .fetch()
 
-        val groupBy = query.groupBy { it.campaignDetailsId }
+        val groupBy = query.groupBy { it.campaignId }
             .map { (_, campaigns) ->
                 val campaign = campaigns.first()
 
                 CampaignDetailResponseDTO(
-                    campaignDetailsId = campaign.campaignDetailsId,
+                    campaignId = campaign.campaignId,
                     campaignTitle = campaign.campaignTitle,
                     campaignCategory = campaign.campaignCategory,
                     campaignUrl = campaign.campaignUrl,
@@ -322,46 +412,50 @@ class CampaignService constructor(
      * @param request: EnrollCampaignRequestDTO
      * @return Boolean
      */
+    @Transactional
     @Throws(CampaignException::class, BasicException::class)
     fun enrollCampaign(request: EnrollCampaignRequestDTO): Boolean {
-        val isUserExisted = accountRepository.findById(request.userId)
 
-        if (isUserExisted.isEmpty) {
-            throw BasicException(BasicError.USER_NOT_EXIST)
-        } else {
-            val user = isUserExisted.get()
-            val isOptionsExisted = campaignOptionsRepository.findById(request.campaignOptionId)
-            if (isOptionsExisted.isPresent) {
-                val option = isOptionsExisted.get()
-                if (request.campaignSubOptionId != null) {
-                    val isSubOptionExisted = campaignSubOptionsRepository.findById(request.campaignSubOptionId)
-                    if (isSubOptionExisted.isPresent) {
-                        campaignEnrollRepository.save(
-                            CampaignEnroll(
-                                user = user,
-                                options = option,
-                                enrollStatus = EnrollStatus.APPLY,
-                                subOptions = isSubOptionExisted.get()
-                            )
-                        )
-                        return true
-                    } else {
-                        throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY)
-                    }
-                } else {
-                    campaignEnrollRepository.save(
-                        CampaignEnroll(
-                            user = user,
-                            options = option,
-                            enrollStatus = EnrollStatus.APPLY
-                        )
-                    )
-                    return true
-                }
-            } else {
-                throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY)
-            }
+        val user = accountRepository.findById(request.userId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+        val campaign = campaignRepository.findById(request.campaignId)
+            .orElseThrow { throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST) }
+
+        val enroll = campaignEnrollRepository.findByCampaign(campaign)
+        if (enroll.isNotEmpty()) { // 등록된 캠페인이 존재한다면?
+            val enrollNotCompletedCount = enroll // 완료된 캠페인이 없는지 필터링
+                .count { it?.enrollStatus != EnrollStatus.COMPLETE }
+                .compareTo(0)
+            // 완료되지 않은 캠페인이 존재하는 경우 에러를 뱉음.
+            if (enrollNotCompletedCount != 0) throw CampaignException(CampaignError.CAMPAIGN_NOT_COMPLETED)
         }
+
+        val option = campaignOptionsRepository.findById(request.campaignOptionId)
+            .orElseThrow { throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY) }
+
+        val registerEnroll = if ( request.campaignSubOptionId != null ) { // 하위 옵션이 존재한다면
+            CampaignEnroll(
+                user = user,
+                campaign = campaign,
+                options = option,
+                subOptions = campaignSubOptionsRepository.findById(request.campaignSubOptionId)
+                    .orElseThrow { throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY) },
+                enrollDate = LocalDate.now(),
+                enrollStatus = EnrollStatus.APPLY
+            )
+        }else {
+            CampaignEnroll(
+                user = user,
+                campaign = campaign,
+                options = option,
+                enrollDate = LocalDate.now(),
+                enrollStatus = EnrollStatus.APPLY
+            )
+        }
+        campaignEnrollRepository.save(registerEnroll)
+
+        return true
     }
 
     @Transactional
