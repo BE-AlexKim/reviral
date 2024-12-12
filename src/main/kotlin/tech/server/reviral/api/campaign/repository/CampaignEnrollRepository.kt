@@ -2,24 +2,24 @@ package tech.server.reviral.api.campaign.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import org.springframework.transaction.annotation.Transactional
+import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
+import tech.server.reviral.api.campaign.model.entity.CampaignEnroll
 import tech.server.reviral.api.campaign.model.entity.CampaignSubOptions
 
 /**
  *packageName    : tech.server.reviral.api.campaign.repository
- * fileName       : CampaignSubOptionsRepository
+ * fileName       : CampaignEnrollRepository
  * author         : joy58
- * date           : 2024-12-03
+ * date           : 2024-12-11
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2024-12-03        joy58       최초 생성
+ * 2024-12-11        joy58       최초 생성
  */
 @Repository
-interface CampaignSubOptionsRepository: JpaRepository<CampaignSubOptions, Long> {
+interface CampaignEnrollRepository: JpaRepository<CampaignEnroll, Long> {
 
-    @Transactional
-    override fun deleteById(campaignSubOptionsId: Long)
+    fun existsBySubOptions(subOption: CampaignSubOptions): Boolean
 
 }

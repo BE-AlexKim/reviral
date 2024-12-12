@@ -24,10 +24,10 @@ data class CampaignCardResponseDTO(
     @Schema(description = "캠페인 상태값")
     val campaignStatus: CampaignStatus? = null,
     @Schema(description = "캠페인 플랫폼")
-    val campaignPlatform: CampaignPlatform,
+    val campaignPlatform: CampaignPlatform? = null,
     @Schema(description = "캠페인 이미지 링크")
-    val campaignImgUrl: String,
-    @Schema(description = "캠페인 상태값")
+    val campaignImgUrl: String? = null,
+    @Schema(description = "캠페인 마감기간")
     val period: Int = 0,
     @Schema(description = "캠페인 상품가격")
     val campaignPrice: Int = 0,

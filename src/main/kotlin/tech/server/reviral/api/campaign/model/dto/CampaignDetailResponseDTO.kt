@@ -46,9 +46,9 @@ data class CampaignDetailResponseDTO(
     )
 
     data class SubOptions (
-        val campaignSubOptionsId: Long,
-        val campaignAddPrice: Int? = 0,
-        val campaignSubOptionTitle: String? = ""
+        val campaignSubOptionsId: Long? = null,
+        val campaignAddPrice: Int? = null,
+        val campaignSubOptionTitle: String? = null
     )
 
 }

@@ -30,21 +30,21 @@ data class Campaign(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_platform")
-    val campaignPlatform: CampaignPlatform,
+    val campaignPlatform: CampaignPlatform? = null,
 
     @Column(name = "campaign_title")
-    val campaignTitle: String,
+    var campaignTitle: String? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_category")
-    val campaignCategory: CampaignCategory,
+    var campaignCategory: CampaignCategory? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_status")
-    val campaignStatus: CampaignStatus,
+    val campaignStatus: CampaignStatus? = null,
 
     @Column(name = "request_company")
-    val companyName: String,
+    var companyName: String? = null,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -52,16 +52,16 @@ data class Campaign(
 
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val updateAt: LocalDateTime? = null,
+    var updateAt: LocalDateTime? = null,
 
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    val details: MutableList<CampaignDetails> = mutableListOf(),
+    var details: MutableList<CampaignDetails> = mutableListOf(),
 
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    val options: MutableList<CampaignDetails> = mutableListOf(),
+    var options: MutableList<CampaignOptions> = mutableListOf(),
 
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    val subOptions: MutableList<CampaignSubOptions> = mutableListOf(),
+    var subOptions: MutableList<CampaignSubOptions> = mutableListOf(),
 
 
 ) {

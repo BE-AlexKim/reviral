@@ -1,7 +1,6 @@
 package tech.server.reviral.api.campaign.model.entity
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
@@ -29,22 +28,22 @@ data class CampaignDetails(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "campaign_id")
-    val campaign: Campaign,
+    val campaign: Campaign? = null,
 
     @Column(name = "campaign_url")
-    val campaignUrl: String,
+    var campaignUrl: String,
 
     @Column(name = "campaign_img_url")
-    val campaignImgUrl: String,
+    var campaignImgUrl: String,
 
     @Column(name = "campaign_price")
-    val campaignPrice: Int,
+    var campaignPrice: Int,
 
     @Column(name = "campaign_total_price")
     val campaignTotalPrice: Int,
 
     @Column(name = "daily_count")
-    val dailyCount: Int,
+    val dailyRecruitCount: Long,
 
     @Column(name = "start_time")
     val startTime: String? = null,
@@ -59,13 +58,13 @@ data class CampaignDetails(
     val optionCount: Int,
 
     @Column(name = "review_point")
-    val reviewPoint: Int,
+    var reviewPoint: Int,
 
     @Column(name = "active_date")
-    val activeDate: LocalDate,
+    var activeDate: LocalDate,
 
     @Column(name = "finish_date")
-    val finishDate: LocalDate,
+    var finishDate: LocalDate,
 
     @Column(name = "active_count")
     val activeCount: Long,
@@ -93,6 +92,6 @@ data class CampaignDetails(
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyCount = $dailyCount , startTime = $startTime , endTime = $endTime , totalCount = $totalCount , optionCount = $optionCount , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , activeCount = $activeCount , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
+        return this::class.simpleName + "(id = $id , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyCount = $dailyRecruitCount , startTime = $startTime , endTime = $endTime , totalCount = $totalCount , optionCount = $optionCount , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , activeCount = $activeCount , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
     }
 }

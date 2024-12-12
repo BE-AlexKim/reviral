@@ -34,16 +34,16 @@ data class CampaignSubOptions(
     val campaign: Campaign? = null,
 
     @Column(name = "option_title")
-    val title: String,
+    val title: String? = null,
 
     @Column(name = "option_count")
-    val recruitPeople: Int,
+    val recruitPeople: Int? = null,
 
     @Column(name = "add_price")
-    val addPrice: Int,
+    val addPrice: Int? = null,
 
     @Column(name = "option_order")
-    val order: Int,
+    val order: Int? = null,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

@@ -2,6 +2,7 @@ package tech.server.reviral.api.campaign.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.campaign.model.entity.CampaignOptions
 
 /**
@@ -17,4 +18,6 @@ import tech.server.reviral.api.campaign.model.entity.CampaignOptions
  */
 @Repository
 interface CampaignOptionsRepository: JpaRepository<CampaignOptions, Long> {
+    @Transactional
+    override fun deleteById(id: Long)
 }

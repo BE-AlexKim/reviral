@@ -34,9 +34,7 @@ import java.lang.annotation.Inherited
     parameters = [
         Parameter(name = "category", description = "조회 카테고리(deadline(마감임박),today(오늘오픈),daily(당일구매),time(시간구매)", required = false),
         Parameter(name = "platform", description = "플랫폼 조회(nv(naver),cp(coupang),etc(기타)", required = false),
-        Parameter(name = "status", description = "progress(진행중),finish(마감),wait(대기중)", required = false),
-        Parameter(name = "page", description = "페이지 번호", required = false),
-        Parameter(name = "size", description = "페이지 당 조회 사이즈", required = false),
+        Parameter(name = "status", description = "progress(진행중),finish(마감),wait(대기중)", required = false)
     ]
 )
 @ApiResponses(

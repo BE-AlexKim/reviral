@@ -1,42 +1,24 @@
 package tech.server.reviral.api.campaign.service
 
 import com.querydsl.core.BooleanBuilder
-import com.querydsl.core.Tuple
-import com.querydsl.core.group.GroupBy.groupBy
-import com.querydsl.core.group.GroupBy.list
-import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.Expressions
-import com.querydsl.jpa.JPAExpressions
 import com.querydsl.jpa.impl.JPAQueryFactory
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
-import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
-import tech.server.reviral.api.campaign.model.dto.SaveCampaignRequestDTO
-import tech.server.reviral.api.campaign.model.entity.Campaign
-import tech.server.reviral.api.campaign.model.entity.CampaignDetails
-import tech.server.reviral.api.campaign.model.entity.CampaignOptions
-import tech.server.reviral.api.campaign.model.entity.CampaignSubOptions
-import tech.server.reviral.api.campaign.model.entity.QCampaign
-import tech.server.reviral.api.campaign.model.entity.QCampaignDetails
-import tech.server.reviral.api.campaign.model.entity.QCampaignOptions
-import tech.server.reviral.api.campaign.model.entity.QCampaignSubOptions
-import tech.server.reviral.api.campaign.model.enums.CampaignCategory
-import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
-import tech.server.reviral.api.campaign.model.enums.CampaignStatus
-import tech.server.reviral.api.campaign.model.enums.OptionType
-import tech.server.reviral.api.campaign.repository.CampaignDetailsRepository
-import tech.server.reviral.api.campaign.repository.CampaignOptionsRepository
-import tech.server.reviral.api.campaign.repository.CampaignRepository
-import tech.server.reviral.api.campaign.repository.CampaignSubOptionsRepository
+import tech.server.reviral.api.account.repository.AccountRepository
+import tech.server.reviral.api.campaign.model.dto.*
+import tech.server.reviral.api.campaign.model.entity.*
+import tech.server.reviral.api.campaign.model.enums.*
+import tech.server.reviral.api.campaign.repository.*
+import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.CampaignException
+import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.response.exception.enums.CampaignError
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 /**
@@ -56,6 +38,8 @@ class CampaignService constructor(
     private val campaignDetailsRepository: CampaignDetailsRepository,
     private val campaignOptionsRepository: CampaignOptionsRepository,
     private val campaignSubOptionsRepository: CampaignSubOptionsRepository,
+    private val accountRepository: AccountRepository,
+    private val campaignEnrollRepository: CampaignEnrollRepository,
     private val queryFactory: JPAQueryFactory
 ){
 
@@ -65,8 +49,7 @@ class CampaignService constructor(
      * @param category: String?
      * @param platform: String?
      * @param status: String?
-     * @param offset: Long?,
-     * @param limit: Long?
+     * @param pageable: Pageable
      * @return List<CampaignCardResponseDTO>
      */
     @Transactional
@@ -75,8 +58,7 @@ class CampaignService constructor(
         category: String?,
         platform: String?,
         status: String?,
-        offset: Long?,
-        limit: Long?
+        pageable: Pageable
     ): List<CampaignCardResponseDTO> {
 
         val qCampaign = QCampaign.campaign
@@ -148,20 +130,19 @@ class CampaignService constructor(
                     CampaignCardResponseDTO::class.java,
                     qCampaign.id.`as`("campaignId"),
                     qCampaign.campaignTitle.`as`("campaignTitle"),
+                    qCampaign.campaignStatus.`as`("campaignStatus"),
                     qCampaign.campaignPlatform.`as`("campaignPlatform"),
                     qCampaignDetails.campaignImgUrl.`as`("campaignImgUrl"),
                     qCampaignDetails.reviewPoint.`as`("campaignPoint"),
                     qCampaignDetails.totalCount.`as`("totalCount"),
                     qCampaignDetails.campaignPrice.`as`("campaignPrice"),
-                    qCampaign.campaignStatus.`as`("campaignStatus")
                 )
             )
             .from(qCampaign)
             .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
             .where(booleanBuilder)
-            .orderBy(qCampaign.createAt.desc())
-            .offset(offset ?: 0)
-            .limit(limit ?: 10)
+            .offset(pageable.offset)
+            .limit(pageable.pageSize.toLong())
             .orderBy(order.asc())
             .fetch()
 
@@ -173,7 +154,7 @@ class CampaignService constructor(
      */
     @Transactional
     @Throws(CampaignException::class)
-    fun getCampaign(campaignId: Long): List<CampaignDetailResponseDTO> {
+    fun getCampaign(campaignId: Long): CampaignDetailResponseDTO {
 
         val qCampaign = QCampaign.campaign
         val qCampaignDetails = QCampaignDetails.campaignDetails
@@ -224,8 +205,7 @@ class CampaignService constructor(
             )
             .fetch()
 
-        return query
-            .groupBy { it.campaignDetailsId }
+        val groupBy = query.groupBy { it.campaignDetailsId }
             .map { (_, campaigns) ->
                 val campaign = campaigns.first()
 
@@ -254,6 +234,7 @@ class CampaignService constructor(
                         }
                 )
             }
+        return groupBy.first()
     }
 
     /**
@@ -261,7 +242,7 @@ class CampaignService constructor(
      */
     @Transactional
     @Throws(CampaignException::class)
-    fun setCampaign( request: SaveCampaignRequestDTO ): Boolean {
+    fun setCampaign(request: SaveCampaignRequestDTO ): Boolean {
 
         // 캠페인 정보 등록
         val campaign = campaignRepository.save(Campaign(
@@ -299,6 +280,7 @@ class CampaignService constructor(
                 option.subOption!!.forEachIndexed { subIndex, subOption ->
                     campaignSubOptionsRepository.save(
                         CampaignSubOptions(
+                            campaign = campaign,
                             campaignOptions = options,
                             title = subOption.subOptionTitle,
                             order = subIndex,
@@ -319,7 +301,7 @@ class CampaignService constructor(
                 campaignUrl = request.campaignLink,
                 campaignImgUrl = request.campaignImgUrl,
                 campaignPrice = request.campaignPrice,
-                campaignTotalPrice = request.campaignPrice * request.options.sumOf { it.recruitPeople },
+                campaignTotalPrice = ( request.campaignPrice + request.reviewPoint ) * request.options.sumOf { it.recruitPeople },
                 optionCount = request.options.size,
                 reviewPoint = request.reviewPoint,
                 totalCount = totalCount,
@@ -327,7 +309,7 @@ class CampaignService constructor(
                 finishDate = request.endSaleDateTime,
                 activeCount = activeCount,
                 sellerRequest = request.sellerRequest,
-                dailyCount = totalCount / activeCount.toInt(),
+                dailyRecruitCount = totalCount / activeCount,
                 startTime = request.startTime,
                 endTime = request.endTime
             )
@@ -335,6 +317,170 @@ class CampaignService constructor(
         return true
     }
 
+    /**
+     * 캠페인 참여 신청
+     * @param request: EnrollCampaignRequestDTO
+     * @return Boolean
+     */
+    @Throws(CampaignException::class, BasicException::class)
+    fun enrollCampaign(request: EnrollCampaignRequestDTO): Boolean {
+        val isUserExisted = accountRepository.findById(request.userId)
+
+        if (isUserExisted.isEmpty) {
+            throw BasicException(BasicError.USER_NOT_EXIST)
+        } else {
+            val user = isUserExisted.get()
+            val isOptionsExisted = campaignOptionsRepository.findById(request.campaignOptionId)
+            if (isOptionsExisted.isPresent) {
+                val option = isOptionsExisted.get()
+                if (request.campaignSubOptionId != null) {
+                    val isSubOptionExisted = campaignSubOptionsRepository.findById(request.campaignSubOptionId)
+                    if (isSubOptionExisted.isPresent) {
+                        campaignEnrollRepository.save(
+                            CampaignEnroll(
+                                user = user,
+                                options = option,
+                                enrollStatus = EnrollStatus.APPLY,
+                                subOptions = isSubOptionExisted.get()
+                            )
+                        )
+                        return true
+                    } else {
+                        throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY)
+                    }
+                } else {
+                    campaignEnrollRepository.save(
+                        CampaignEnroll(
+                            user = user,
+                            options = option,
+                            enrollStatus = EnrollStatus.APPLY
+                        )
+                    )
+                    return true
+                }
+            } else {
+                throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY)
+            }
+        }
+    }
+
+    @Transactional
+    @Throws(CampaignException::class)
+    fun updateCampaign(campaignId: Long, request: UpdateCampaignRequestDTO): Boolean {
+
+        val campaign = campaignRepository.findById(campaignId)
+            .orElseThrow {  throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY) }
+
+        val campaignDetails = campaign.details.map { details ->
+            CampaignDetails(
+                id = details.id,
+                campaignUrl = request.campaignLink,
+                campaign = campaign,
+                campaignImgUrl = request.campaignImgUrl,
+                campaignPrice = request.campaignPrice,
+                campaignTotalPrice = ( request.campaignPrice + request.reviewPoint ) * request.options.sumOf { it.recruitPeople } ,
+                dailyRecruitCount = getLocalDateBetween(request.startSaleDateTime, request.endSaleDateTime).div(request.options.sumOf { it.recruitPeople }),
+                startTime = request.startTime,
+                endTime = request.endTime,
+                totalCount = request.options.sumOf { it.recruitPeople },
+                optionCount = request.options.size,
+                reviewPoint = request.reviewPoint,
+                activeDate = request.startSaleDateTime,
+                finishDate = request.endSaleDateTime,
+                activeCount = getLocalDateBetween(request.startSaleDateTime, request.endSaleDateTime),
+                sellerRequest = request.sellerRequest,
+                updateAt = LocalDateTime.now()
+            )
+        }.toMutableList()
+
+        // 옵션 데이터 조회
+        val campaignOptions = campaign.options
+
+        // 요청 데이터 분류
+        val updateOptions = request.options.associateBy { it.campaignOptionId }
+
+        // 삭제 요청할 옵션 데이터 목록 취합
+        val deleteOptions = campaignOptions.filter { it.id !in updateOptions.keys }.map { it }
+        if ( deleteOptions.isNotEmpty() ) {
+            this.campaignOptionsRepository.deleteAll(deleteOptions)
+            this.campaignOptionsRepository.flush()
+        }
+
+        // 수정할 데이터 목록
+        val updateOptionsList = campaignOptions
+            .filter { it.id in updateOptions.keys }
+            .mapIndexed { index, options ->
+                CampaignOptions(
+                    id = options.id,
+                    title = request.options[index].optionTitle,
+                    campaign = campaign,
+                    optionType = request.optionType,
+                    recruitPeople = if ( request.optionType == OptionType.SINGLE ) {
+                        request.options.sumOf { it.recruitPeople }
+                    }else {
+                        request.options[index].subOption!!.sumOf { it.recruitPeople }
+                    },
+                    order = index,
+                    updateAt = LocalDateTime.now()
+                )
+            }.toMutableList()
+
+        if ( request.optionType == OptionType.MULTI ) {
+            // 수정 요청 하위 옵션 데이터
+            val updateSubOptionsMap = mutableMapOf<Long, UpdateCampaignRequestDTO.SubOptions>()
+            request.options.map {
+                it.subOption!!.forEach { option ->
+                    updateSubOptionsMap[option.campaignSubOptionId] = option
+                }
+            }
+
+            val deleteSubOptions = campaign.subOptions.filter { it.id !in updateSubOptionsMap.keys }.map { it }
+            if (deleteSubOptions.isNotEmpty()) {
+                this.campaignSubOptionsRepository.deleteAll(deleteSubOptions)
+                this.campaignSubOptionsRepository.flush()
+            }
+
+            // 수정 데이터 취합
+            val updateSubOptionList = mutableListOf<CampaignSubOptions>()
+
+            request.options.mapIndexed { index, option ->
+                option.subOption?.mapIndexed { subOptionIdx, subOptions ->
+                    updateSubOptionList.add(
+                        CampaignSubOptions(
+                            id = subOptions.campaignSubOptionId,
+                            title = subOptions.subOptionTitle,
+                            campaign = campaign,
+                            campaignOptions = updateOptionsList[index],
+                            recruitPeople = subOptions.recruitPeople,
+                            addPrice = subOptions.addPrice,
+                            order = subOptionIdx,
+                            updateAt = LocalDateTime.now()
+                        )
+                    )
+                }
+            }
+            campaign.subOptions = updateSubOptionList
+        }
+        campaign.options = updateOptionsList
+        campaign.details = campaignDetails
+        campaign.companyName = request.companyName
+        campaign.campaignTitle = request.productTitle
+        campaign.campaignCategory = request.category
+        campaign.campaignTitle = request.productTitle
+        campaign.updateAt = LocalDateTime.now()
+
+
+
+        this.campaignRepository.save(campaign) // 캠페인 데이터 수정
+
+        return true
+    }
+
+    /**
+     * @param startDate: LocalDate,
+     * @param endDate: LocalDate
+     * @return
+     */
     @Throws(CampaignException::class)
     private fun getLocalDateBetween(startDate: LocalDate, endDate: LocalDate): Long {
         if ( startDate.isBefore(endDate) ) {

@@ -26,7 +26,7 @@ data class CampaignOptions(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "campaign_id")
-    val campaign: Campaign,
+    val campaign: Campaign? = null,
 
     @OneToMany(mappedBy="campaignOptions",fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     val subOptions: List<CampaignSubOptions> = emptyList(),

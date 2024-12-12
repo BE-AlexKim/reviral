@@ -25,7 +25,8 @@ enum class CampaignError(
     private val code: String,
     private val message: String
 ): ExceptionMessageInitializer {
-
+    CAMPAIGN_IS_NOT_EXIST(HttpStatus.BAD_REQUEST, "CP0004", CampaignExceptionMessage.CAMPAIGN_IS_NOT_EXIST),
+    OPTION_IS_NOT_EMPTY(HttpStatus.BAD_REQUEST,"CP0003", CampaignExceptionMessage.OPTION_IS_NOT_EMPTY),
     START_DATE_SET(HttpStatus.BAD_REQUEST, "CP0002", CampaignExceptionMessage.START_DATE_SET),
     DEFAULT(HttpStatus.INTERNAL_SERVER_ERROR, "CP0001", CampaignExceptionMessage.DEFAULT);
 

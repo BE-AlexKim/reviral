@@ -95,47 +95,44 @@ class JPAQuerydslTest(
             .from(qCampaign)
             .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
             .join(qCampaignOptions).on(qCampaignOptions.campaign.id.eq(qCampaignDetails.campaign.id))
-            .join(qCampaignSubOptions).on(qCampaignSubOptions.campaignOptions.id.eq(qCampaignOptions.id))
+            .leftJoin(qCampaignSubOptions).on(qCampaignSubOptions.campaignOptions.id.eq(qCampaignOptions.id))
             .where(qCampaign.id.eq(17L))
-            .groupBy(
-                qCampaignDetails.id,
-                qCampaign.id,
-                qCampaignOptions.id,
-                qCampaignSubOptions.id
-            )
+            .distinct()
             .fetch()
 
-        val group = query
-            .groupBy { it.campaignDetailsId }
-            .map { (_, campaigns) ->
-                val campaign = campaigns.first()
+        println("QUERY :::::: $query")
 
-                CampaignDetailResponseDTO(
-                    campaignDetailsId = campaign.campaignDetailsId,
-                    campaignTitle = campaign.campaignTitle,
-                    campaignCategory = campaign.campaignCategory,
-                    campaignUrl = campaign.campaignUrl,
-                    campaignImgUrl = campaign.campaignImgUrl,
-                    campaignPrice = campaign.campaignPrice,
-                    campaignPoint = campaign.campaignPoint,
-                    sellerRequest = campaign.sellerRequest,
-                    totalCount = campaign.totalCount,
-                    joinCount = campaign.joinCount,
-                    options = campaigns.flatMap { it.options }
-                        .groupBy { it!!.campaignOptionsId }
-                        .map { (_, options) ->
-                            val option = options.first()
-
-                            CampaignDetailResponseDTO.Options(
-                                campaignOptionsId = option!!.campaignOptionsId,
-                                optionTitle = option.optionTitle,
-                                subOptions = options.flatMap { it!!.subOptions }
-                                    .distinctBy { it?.campaignSubOptionsId }
-                            )
-                        }
-                )
-            }
-
-        println("GROUP :::: $group")
+//        val group = query
+//            .groupBy { it.campaignDetailsId }
+//            .map { (_, campaigns) ->
+//                val campaign = campaigns.first()
+//
+//                CampaignDetailResponseDTO(
+//                    campaignDetailsId = campaign.campaignDetailsId,
+//                    campaignTitle = campaign.campaignTitle,
+//                    campaignCategory = campaign.campaignCategory,
+//                    campaignUrl = campaign.campaignUrl,
+//                    campaignImgUrl = campaign.campaignImgUrl,
+//                    campaignPrice = campaign.campaignPrice,
+//                    campaignPoint = campaign.campaignPoint,
+//                    sellerRequest = campaign.sellerRequest,
+//                    totalCount = campaign.totalCount,
+//                    joinCount = campaign.joinCount,
+//                    options = campaigns.flatMap { it.options }
+//                        .groupBy { it!!.campaignOptionsId }
+//                        .map { (_, options) ->
+//                            val option = options.first()
+//
+//                            CampaignDetailResponseDTO.Options(
+//                                campaignOptionsId = option!!.campaignOptionsId,
+//                                optionTitle = option.optionTitle,
+//                                subOptions = options.flatMap { it!!.subOptions }
+//                                    .distinctBy { it?.campaignSubOptionsId }
+//                            )
+//                        }
+//                )
+//            }
+//
+//        println("GROUP :::: $group")
     }
 }

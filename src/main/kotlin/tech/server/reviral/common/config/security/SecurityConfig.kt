@@ -64,6 +64,17 @@ class SecurityConfig(
             it.requestMatchers(
                 HttpMethod.POST,"/api/v1/campaign/save"
             ).permitAll()
+            it.requestMatchers(
+                HttpMethod.PUT, "/api/v1/campaign/{campaignId}"
+            ).permitAll()
+
+//            it.requestMatchers(
+//                HttpMethod.POST,"/api/v1/campaign/save"
+//            ).hasAuthority("ROLE_ADMIN")
+//            it.requestMatchers(
+//                HttpMethod.PUT,
+//                "/api/v1/campaign/{campaignId}"
+//            ).hasAuthority("ROLE_ADMIN")
 
             // User URL Permit
             it.requestMatchers(
@@ -82,9 +93,6 @@ class SecurityConfig(
                 "/v3/api-docs/**",
                 "/swagger-resources/**"
             ).permitAll()
-            it.requestMatchers(
-                HttpMethod.POST,"/api/v1/campaign/save"
-            ).hasAuthority("ROLE_ADMIN")
             it.anyRequest().authenticated()
         }
 
