@@ -2,6 +2,7 @@ package tech.server.reviral.api.campaign.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
 import tech.server.reviral.api.campaign.model.entity.Campaign
 import tech.server.reviral.api.campaign.model.entity.CampaignEnroll
@@ -26,4 +27,7 @@ interface CampaignEnrollRepository: JpaRepository<CampaignEnroll, Long> {
 
     fun findByCampaign(campaign: Campaign): List<CampaignEnroll?>
 
+    fun countByUserAndCampaign(user: User, campaign: Campaign): Int
+
+    fun countAllById(campaignEnrollId: Long): Int
 }

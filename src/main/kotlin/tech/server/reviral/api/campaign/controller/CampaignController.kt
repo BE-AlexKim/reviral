@@ -7,10 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.campaign.service.CampaignService
-import tech.server.reviral.common.config.docs.campaign.SaveCampaignExplain
-import tech.server.reviral.common.config.docs.campaign.SearchCampaignDetailsExplain
-import tech.server.reviral.common.config.docs.campaign.SearchCampaignExplain
-import tech.server.reviral.common.config.docs.campaign.UpdateCampaignExplain
+import tech.server.reviral.common.config.docs.campaign.*
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 
 /**
@@ -81,6 +78,7 @@ class CampaignController constructor(
      * @return Boolean
      */
     @PostMapping("/enroll")
+    @EnrollCampaignExplain
     fun enroll(@RequestBody request: EnrollCampaignRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
         val enroll = campaignService.enrollCampaign(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", enroll)

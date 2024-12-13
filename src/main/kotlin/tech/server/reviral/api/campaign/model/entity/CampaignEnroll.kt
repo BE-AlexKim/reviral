@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
 import tech.server.reviral.api.account.model.entity.User
+import tech.server.reviral.api.campaign.model.entity.pk.CampaignEnrollId
 import tech.server.reviral.api.campaign.model.enums.EnrollStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -22,14 +23,17 @@ import java.util.*
  */
 @Entity
 @Table(name = "tb_campaign_enroll")
+@IdClass(CampaignEnrollId::class)
 @Comment("캠페인 참여 정보 테이블")
 data class CampaignEnroll(
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "campaign_enroll_id")
-    @Comment("캠페인 참여 일련번호")
     val id: Long? = null,
+
+    @Id
+    @Column(name = "campaign_enroll_count")
+    val enrollCount: Int = 0,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "user_id")
@@ -72,13 +76,14 @@ data class CampaignEnroll(
         if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
         other as CampaignEnroll
 
-        return id != null && id == other.id
+        return id == other.id
+                && enrollCount == other.enrollCount
     }
 
-    override fun hashCode(): Int = javaClass.hashCode()
+    override fun hashCode(): Int = Objects.hash(id, enrollCount);
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , enrollStatus = $enrollStatus , enrollDate = $enrollDate , createAt = $createAt , updateAt = $updateAt )"
+        return this::class.simpleName + "(id = $id , enrollCount = $enrollCount , enrollStatus = $enrollStatus , enrollDate = $enrollDate , createAt = $createAt , updateAt = $updateAt )"
     }
 }

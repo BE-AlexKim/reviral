@@ -424,36 +424,43 @@ class CampaignService constructor(
 
         val enroll = campaignEnrollRepository.findByCampaign(campaign)
         if (enroll.isNotEmpty()) { // 등록된 캠페인이 존재한다면?
-            val enrollNotCompletedCount = enroll // 완료된 캠페인이 없는지 필터링
+            // 완료된 캠페인이 없는지 필터링
+            val enrollNotCompletedCount = enroll
                 .count { it?.enrollStatus != EnrollStatus.COMPLETE }
                 .compareTo(0)
+
             // 완료되지 않은 캠페인이 존재하는 경우 에러를 뱉음.
-            if (enrollNotCompletedCount != 0) throw CampaignException(CampaignError.CAMPAIGN_NOT_COMPLETED)
+            if (enrollNotCompletedCount != 0) {
+                throw CampaignException(CampaignError.CAMPAIGN_NOT_COMPLETED)
+            }
         }
 
         val option = campaignOptionsRepository.findById(request.campaignOptionId)
             .orElseThrow { throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY) }
 
-        val registerEnroll = if ( request.campaignSubOptionId != null ) { // 하위 옵션이 존재한다면
-            CampaignEnroll(
-                user = user,
-                campaign = campaign,
-                options = option,
-                subOptions = campaignSubOptionsRepository.findById(request.campaignSubOptionId)
-                    .orElseThrow { throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY) },
-                enrollDate = LocalDate.now(),
-                enrollStatus = EnrollStatus.APPLY
-            )
-        }else {
-            CampaignEnroll(
-                user = user,
-                campaign = campaign,
-                options = option,
-                enrollDate = LocalDate.now(),
-                enrollStatus = EnrollStatus.APPLY
-            )
-        }
-        campaignEnrollRepository.save(registerEnroll)
+        // 하위 옵션이 존재한다면
+        val subOption = if (request.campaignSubOptionId != null) {
+
+            if ( option.subOptions.any { it.id != request.campaignSubOptionId } ) {
+                throw CampaignException(CampaignError.SUB_OPTION_IS_NOT_CONTAIN_OPTION)
+            }
+
+            campaignSubOptionsRepository.findByIdAndCampaign(request.campaignSubOptionId, campaign)
+                ?: throw CampaignException(CampaignError.SUB_OPTION_IS_NOT_EMPTY)
+
+        }else null
+
+        // 캠페인 등록
+        this.campaignEnrollRepository.save(CampaignEnroll(
+            id = campaignEnrollRepository.count() + 1,
+            enrollCount = campaignEnrollRepository.countByUserAndCampaign(user, campaign),
+            user = user,
+            campaign = campaign,
+            options = option,
+            subOptions = subOption,
+            enrollDate = LocalDate.now(),
+            enrollStatus = EnrollStatus.APPLY,
+        ))
 
         return true
     }
@@ -562,8 +569,6 @@ class CampaignService constructor(
         campaign.campaignCategory = request.category
         campaign.campaignTitle = request.productTitle
         campaign.updateAt = LocalDateTime.now()
-
-
 
         this.campaignRepository.save(campaign) // 캠페인 데이터 수정
 
