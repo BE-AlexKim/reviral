@@ -13,10 +13,18 @@ import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.campaign.model.entity.*
+import tech.server.reviral.api.campaign.model.entity.pk.CampaignEnrollId
 import tech.server.reviral.api.campaign.model.enums.*
 import tech.server.reviral.api.campaign.repository.*
+import tech.server.reviral.api.point.model.entity.Point
+import tech.server.reviral.api.point.model.entity.PointAttribute
+import tech.server.reviral.api.point.model.entity.QPointAttribute
+import tech.server.reviral.api.point.model.enums.PointStatus
+import tech.server.reviral.api.point.repository.PointAttributeRepository
+import tech.server.reviral.api.point.repository.PointRepository
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.CampaignException
+import tech.server.reviral.common.config.response.exception.PointException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.response.exception.enums.CampaignError
 import java.time.LocalDate
@@ -42,6 +50,8 @@ class CampaignService constructor(
     private val campaignSubOptionsRepository: CampaignSubOptionsRepository,
     private val accountRepository: AccountRepository,
     private val campaignEnrollRepository: CampaignEnrollRepository,
+    private val pointRepository: PointRepository,
+    private val pointAttributeRepository: PointAttributeRepository,
     private val queryFactory: JPAQueryFactory
 ){
 
@@ -441,7 +451,7 @@ class CampaignService constructor(
         // 하위 옵션이 존재한다면
         val subOption = if (request.campaignSubOptionId != null) {
 
-            if ( option.subOptions.any { it.id != request.campaignSubOptionId } ) {
+            if ( option.subOptions.none { it.id == request.campaignSubOptionId } ) {
                 throw CampaignException(CampaignError.SUB_OPTION_IS_NOT_CONTAIN_OPTION)
             }
 
@@ -451,9 +461,12 @@ class CampaignService constructor(
         }else null
 
         // 캠페인 등록
-        this.campaignEnrollRepository.save(CampaignEnroll(
-            id = campaignEnrollRepository.count() + 1,
-            enrollCount = campaignEnrollRepository.countByUserAndCampaign(user, campaign),
+        val campaignEnroll = campaignEnrollRepository.save(
+            CampaignEnroll(
+            id = CampaignEnrollId(
+                id = campaignEnrollRepository.count() + 1,
+                enrollCount = campaignEnrollRepository.countByUserAndCampaign(user, campaign),
+            ),
             user = user,
             campaign = campaign,
             options = option,
@@ -461,6 +474,37 @@ class CampaignService constructor(
             enrollDate = LocalDate.now(),
             enrollStatus = EnrollStatus.APPLY,
         ))
+
+        // 예상 적립 포인트 등록
+        val point = pointRepository.findByUser(user)
+            ?: Point(
+                    user = user,
+                    remainPoint = 0,
+                    totalChangePoint = 0,
+                    expectPoint = 0,
+                    createAt = LocalDateTime.now()
+                )
+        val detail = campaign.details.first()
+        val totalPoint = if((subOption?.addPrice ?: 0) >= 0) {
+            detail.campaignPrice + detail.reviewPoint + ( subOption?.addPrice ?: 0 )
+        }else {
+            detail.campaignPrice + detail.reviewPoint - ( subOption?.addPrice ?: 0 )
+        }
+
+        point.expectPoint = point.expectPoint + totalPoint
+
+        this.pointRepository.save(point)
+
+        // 포인트 상태 정보 등록
+        this.pointAttributeRepository.save(
+            PointAttribute(
+                user = user,
+                campaignEnroll = campaignEnroll,
+                status = PointStatus.EXPECT,
+                point = totalPoint,
+                createAt = LocalDateTime.now()
+            )
+        )
 
         return true
     }
@@ -575,10 +619,83 @@ class CampaignService constructor(
         return true
     }
 
+    @Transactional
+    @Throws(CampaignException::class, BasicException::class, PointException::class)
+    fun getMyCampaigns(userId: Long): MyCampaignResponseDTO {
+        // 사용자 정보 조회
+        val user = accountRepository.findById(userId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+        // 사용자 캠페인 목록 정보 조회
+        val enrollCampaigns = campaignEnrollRepository.findByUser(user)
+
+        val myCampaigns = enrollCampaigns
+            ?.filter {
+                it.enrollStatus != EnrollStatus.COMPLETE
+            }?.map {
+            MyCampaignResponseDTO.MyCampaigns(
+                campaignId = it.campaign?.id,
+                campaignStatus = it.enrollStatus,
+                registerDate = it.createAt,
+                campaignImgUrl = it.campaign?.details?.first()?.campaignImgUrl,
+                campaignTitle = it.campaign?.campaignTitle
+            )
+        }
+
+        val point = pointRepository.findByUser(user)
+            ?: pointRepository.save(Point(
+                user = user,
+                remainPoint = 0,
+                expectPoint = 0,
+                totalChangePoint = 0,
+                createAt = LocalDateTime.now()
+            ))
+
+
+        val qPointAttribute = QPointAttribute.pointAttribute
+
+        val query = queryFactory
+            .select(
+                Expressions.numberTemplate(
+                    Long::class.java,
+                    "SUM({0})",
+                    qPointAttribute.point
+                )
+            )
+            .from(qPointAttribute)
+
+        val expectPoint = ( query.where(
+            qPointAttribute.user.eq(user)
+                .and(qPointAttribute.status.eq(PointStatus.EXPECT))
+        ).fetchOne() ?: 0 ).toInt()
+
+        val changeTotalPoint = ( query.where(
+            qPointAttribute.user.eq(user)
+                .and(qPointAttribute.status.eq(PointStatus.COMPLETE))
+        ).fetchOne() ?: 0 ).toInt()
+
+        val myCampaignUserInfo = MyCampaignResponseDTO.MyCampaignUserInfo(
+            username = user.name,
+            loginId = user.username,
+            expectPoint = expectPoint,
+            changeTotalPoint = changeTotalPoint,
+            userPoint = point.remainPoint
+        )
+
+        return MyCampaignResponseDTO(
+            joinCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.APPLY },
+            progressCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.PROGRESS },
+            inspectCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.INSPECT },
+            reviewCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.REVIEW },
+            userInfo = myCampaignUserInfo,
+            myCampaigns = myCampaigns
+        )
+    }
+
     /**
      * @param startDate: LocalDate,
      * @param endDate: LocalDate
-     * @return
+     * @return Long
      */
     @Throws(CampaignException::class)
     private fun getLocalDateBetween(startDate: LocalDate, endDate: LocalDate): Long {
@@ -588,5 +705,4 @@ class CampaignService constructor(
             throw CampaignException(CampaignError.START_DATE_SET)
         }
     }
-
 }

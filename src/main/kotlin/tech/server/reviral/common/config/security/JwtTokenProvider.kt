@@ -117,7 +117,6 @@ class JwtTokenProvider(
     @Throws(BasicException::class)
     fun validateToken(request: HttpServletRequest, accessToken: String): Authentication {
         try {
-            log.info { accessToken }
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken)
             return getAuthentication(accessToken)
         }catch (e: SignatureException) {

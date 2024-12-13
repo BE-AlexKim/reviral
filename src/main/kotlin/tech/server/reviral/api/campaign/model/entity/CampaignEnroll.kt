@@ -23,17 +23,11 @@ import java.util.*
  */
 @Entity
 @Table(name = "tb_campaign_enroll")
-@IdClass(CampaignEnrollId::class)
 @Comment("캠페인 참여 정보 테이블")
 data class CampaignEnroll(
 
-    @Id
-    @Column(name = "campaign_enroll_id")
-    val id: Long? = null,
-
-    @Id
-    @Column(name = "campaign_enroll_count")
-    val enrollCount: Int = 0,
+    @EmbeddedId
+    val id: CampaignEnrollId,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "user_id")
@@ -76,14 +70,13 @@ data class CampaignEnroll(
         if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
         other as CampaignEnroll
 
-        return id == other.id
-                && enrollCount == other.enrollCount
+        return id != null && id == other.id
     }
 
-    override fun hashCode(): Int = Objects.hash(id, enrollCount);
+    override fun hashCode(): Int = Objects.hash(id);
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , enrollCount = $enrollCount , enrollStatus = $enrollStatus , enrollDate = $enrollDate , createAt = $createAt , updateAt = $updateAt )"
+        return this::class.simpleName + "(EmbeddedId = $id , enrollStatus = $enrollStatus , enrollDate = $enrollDate , createAt = $createAt , updateAt = $updateAt )"
     }
 }

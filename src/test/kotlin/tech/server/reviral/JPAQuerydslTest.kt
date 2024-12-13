@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
+import tech.server.reviral.api.account.model.entity.QUser
 import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
 import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
 import tech.server.reviral.api.campaign.model.entity.QCampaign
@@ -17,6 +18,9 @@ import tech.server.reviral.api.campaign.model.entity.QCampaignDetails
 import tech.server.reviral.api.campaign.model.entity.QCampaignEnroll
 import tech.server.reviral.api.campaign.model.entity.QCampaignOptions
 import tech.server.reviral.api.campaign.model.entity.QCampaignSubOptions
+import tech.server.reviral.api.point.model.entity.QPointAttribute
+import tech.server.reviral.api.point.model.entity.QPointExchange
+import tech.server.reviral.api.point.model.enums.PointStatus
 import java.time.LocalDate
 
 /**
@@ -172,5 +176,32 @@ class JPAQuerydslTest(
 //            }
 //
 //        println("GROUP :::: $group")
+    }
+
+    @DisplayName("Point")
+    @Test
+    @Transactional
+    fun pointQuery() {
+
+        val qUser = QUser.user
+        val qPointAttribute = QPointAttribute.pointAttribute
+        val qPointExchange = QPointExchange.pointExchange
+
+        val query = queryFactory
+            .from(qPointExchange)
+            .leftJoin(qPointExchange.user, qUser)
+            .on(qPointExchange.user.id.eq(qUser.id))
+            .leftJoin(qPointAttribute.user, qUser)
+            .on(qPointAttribute.user.id.eq(qUser.id))
+            .where(
+                qUser.id.eq(1)
+                    .and(qPointAttribute.status.eq(PointStatus.COMPLETE))
+            )
+            .orderBy(
+                qPointExchange.createAt.desc().nullsLast(),
+                qPointAttribute.createAt.desc().nullsLast()
+            ).fetch()
+
+        println("QUERY ::::: $query")
     }
 }

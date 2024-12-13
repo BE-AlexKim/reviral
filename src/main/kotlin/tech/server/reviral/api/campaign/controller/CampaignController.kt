@@ -100,4 +100,18 @@ class CampaignController constructor(
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isUpdated", update)
     }
 
+    /**
+     * 사용자 마이캠페인 정보 조회
+     * @param loginId: String
+     * @return ResponseEntity<WrapResponseEntity<Boolean>>
+     */
+    @GetMapping("/users/{userId}")
+    @SearchMyCampaignExplain
+    fun getMyCampaigns(
+        @PathVariable userId: Long
+    ): ResponseEntity<WrapResponseEntity<MyCampaignResponseDTO>> {
+        val myCampaigns = campaignService.getMyCampaigns(userId)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "myCampaigns", myCampaigns)
+    }
+
 }

@@ -18,7 +18,7 @@ object BasicExceptionMessage {
     const val EXPIRED_ACCESS_TOKEN = "인증이 만료되었습니다."
     const val EXPIRED_REFRESH_TOKEN = "재사용 토큰이 만료되었습니다."
     const val AUTH_METHOD_UNSUPPORTED = "지원하지 않는 접근 권한입니다."
-    const val AUTH_IS_NOT_EMPTY = "권한이 존재하지 않습니다."
+    const val AUTH_IS_NOT_EMPTY = "접근이 제한되었습니다."
     const val TOKEN_ERROR = "토큰이 정상적으로 작동하지 않습니다."
     const val REFRESH_TOKEN_NOT_EXIST = "만료된 접근입니다."
     const val TOKEN_NOT_MATCH = "잘못된 접근입니다."

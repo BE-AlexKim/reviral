@@ -2,6 +2,7 @@ package tech.server.reviral.common.config.response.exception
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import tech.server.reviral.common.config.response.exception.enums.BasicError
 
 /**
  *packageName    : tech.server.reviral.common.config.response.exception
@@ -48,6 +50,30 @@ class CustomExceptionHandler: ResponseEntityExceptionHandler() {
                     status = ex.getErrorCode().getHttpStatus().value(),
                     code = ex.getErrorCode().getCode(),
                     message = ex.getErrorCode().getMessage()
+                )
+            )
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleException(ex: Exception): ResponseEntity<ExceptionDTO> {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ExceptionDTO(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    code = BasicError.DEFAULT.getCode(),
+                    message = BasicError.DEFAULT.getMessage()
+                )
+            )
+    }
+
+    @ExceptionHandler(RuntimeException::class)
+    fun handleRuntimeException(ex: RuntimeException): ResponseEntity<ExceptionDTO> {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ExceptionDTO(
+                    status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    code = BasicError.DEFAULT.getCode(),
+                    message = BasicError.DEFAULT.getMessage()
                 )
             )
     }

@@ -41,6 +41,7 @@ enum class BasicError(
     USER_ALREADY_EXIST(HttpStatus.BAD_REQUEST,"BE0014",BasicExceptionMessage.USER_ALREADY_EXIST),
 
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E00002", BasicExceptionMessage.UNAUTHORIZED);
+
     override fun getCode(): String {
         return code
     }
