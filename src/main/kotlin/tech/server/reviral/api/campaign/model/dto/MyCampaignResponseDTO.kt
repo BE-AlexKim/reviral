@@ -37,15 +37,15 @@ data class MyCampaignResponseDTO(
     @Schema(name = "마이 캠페인 사용자 정보 모델")
     data class MyCampaignUserInfo(
         @Schema(description = "사용자 성명")
-        val username: String? = null,
+        val name: String? = null,
         @Schema(description = "사용자 로그인 아이디")
         val loginId: String? = null,
-        @Schema(description = "이번달 적립 포인트")
+        @Schema(description = "적립 가능 포인트")
         val expectPoint: Int? = null,
         @Schema(description = "총 전환 포인트")
-        val changeTotalPoint: Int? = null,
+        val totalPoint: Int? = null,
         @Schema(description = "포인트 잔액")
-        val userPoint: Int? = null
+        val remainPoint: Int? = null
     )
 
     @Schema(name = "캠페인 목록")

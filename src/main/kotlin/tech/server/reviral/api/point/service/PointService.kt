@@ -9,6 +9,7 @@ import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.api.campaign.model.entity.QCampaign
 import tech.server.reviral.api.campaign.model.entity.QCampaignDetails
 import tech.server.reviral.api.point.model.dto.ExchangePointRequestDTO
+import tech.server.reviral.api.point.model.dto.PointAttributeResponseDTO
 import tech.server.reviral.api.point.model.entity.PointExchange
 import tech.server.reviral.api.point.model.entity.QPointAttribute
 import tech.server.reviral.api.point.model.entity.QPointExchange
@@ -55,12 +56,19 @@ class PointService constructor(
         val user = accountRepository.findById(request.userId)
             .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
-        // 포인트 전환 내역 조회
+        // 포인트 내역 조회
         val point = pointRepository.findByUser(user)
             ?: throw PointException(PointError.POINT_IS_NOT_EXIST)
 
+        // 기존 전환 신청 내역이 있는지 조회
+        val pointExchanges = pointExchangeRepository.findByUserAndStatus(user, ExchangeStatus.REQ)
+
+        // 기존 전환 신청 내역이 있을 경우,
+        val totalPoint = point.remainPoint + pointExchanges.filterNotNull()
+            .sumOf { it.pointValue }
+
         // 전환 가능한 포인트 내역을 초과했을 경우, 오류 발생
-        if ( point.remainPoint >= request.exchangeValue ) {
+        if ( totalPoint >= request.exchangeValue ) {
             throw PointException(PointError.EXCHANGE_BETTER_THAN_REMAIN)
         }
 
@@ -78,30 +86,38 @@ class PointService constructor(
 
     @Transactional
     @Throws(PointException::class, BasicException::class)
-    fun getPointAttributes(loginId: String) {
+    fun getPointAttributes(loginId: String): PointAttributeResponseDTO {
         val user = accountRepository.findByLoginId(loginId)
             ?: throw BasicException(BasicError.USER_NOT_EXIST)
 
-        val qUser = QUser.user
-        val qPointAttribute = QPointAttribute.pointAttribute
-        val qPointExchange = QPointExchange.pointExchange
+        val point = pointRepository.findByUser(user)
+            ?: throw PointException(PointError.POINT_IS_NOT_EXIST)
 
-        val query = queryFactory
-            .select(
-            )
-            .from(qPointExchange)
-            .leftJoin(qPointExchange.user, qUser)
-            .on(qPointAttribute.user.id.eq(qUser.id))
-            .leftJoin(qPointAttribute.user, qUser)
-            .on(qPointAttribute.user.id.eq(qUser.id))
-            .where(
-                qUser.id.eq(user.id)
-                    .and(qPointAttribute.status.eq(PointStatus.COMPLETE))
-            )
-            .orderBy(
-                qPointExchange.createAt.desc().nullsLast(),
-                qPointAttribute.createAt.desc().nullsLast()
-            ).fetch()
+        val userInfo = PointAttributeResponseDTO.UserInfo(
+            name = user.name,
+            loginId = user.loginId,
+            expectPoint = point.expectPoint,
+            totalPoint = point.totalChangePoint,
+            remainPoint = point.remainPoint
+        )
 
+        val pointExchange = pointExchangeRepository.findByUserOrderByCreateAt(user)
+        if ( pointExchange != null) {
+            return PointAttributeResponseDTO(
+                user = userInfo,
+                pointHistory = pointExchange.map {
+                    PointAttributeResponseDTO.PointAttr(
+                        pointStatus = it.status!!,
+                        createAt = it.createAt!!,
+                        exchangeDesc = it.exchangeDesc!!
+                    )
+                }
+            )
+        }else {
+            return PointAttributeResponseDTO(
+                user = userInfo,
+                pointHistory = null
+            )
+        }
     }
 }

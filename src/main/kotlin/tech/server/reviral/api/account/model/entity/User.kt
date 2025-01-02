@@ -48,6 +48,12 @@ class User(
     @Column(name = "point_pw")
     val pointPw: String? = null,
 
+    @Column(name = "bank_code")
+    val bankCode: String? = null,
+
+    @Column(name = "account_number")
+    val account: String? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role")
     val auth: UserRole,

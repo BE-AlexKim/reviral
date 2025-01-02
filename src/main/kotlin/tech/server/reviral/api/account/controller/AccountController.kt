@@ -5,6 +5,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -13,11 +14,9 @@ import org.springframework.web.bind.annotation.RestController
 import tech.server.reviral.api.account.model.dto.ReloadRequestDTO
 import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
+import tech.server.reviral.api.account.model.dto.UserInfoResponseDTO
 import tech.server.reviral.api.account.service.AccountService
-import tech.server.reviral.common.config.docs.account.IdCheckExplain
-import tech.server.reviral.common.config.docs.account.JwtReloadExplain
-import tech.server.reviral.common.config.docs.account.SignInExplain
-import tech.server.reviral.common.config.docs.account.SignUpExplain
+import tech.server.reviral.common.config.docs.account.*
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 import tech.server.reviral.common.config.security.JwtToken
 
@@ -65,6 +64,13 @@ class AccountController constructor(
     fun reloadUserByRefreshToken(@RequestBody request: ReloadRequestDTO): ResponseEntity<WrapResponseEntity<JwtToken>> {
         val reissueToken =  accountService.reloadUserByRefreshToken(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "jwt",reissueToken)
+    }
+
+    @PostMapping("/info/{username}")
+    @UserInfoExplain
+    fun getUserInfo(@PathVariable username: String): ResponseEntity<WrapResponseEntity<UserInfoResponseDTO>> {
+        val userInfo = accountService.getUserInfo(username)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "userInfo", userInfo)
     }
 
 }

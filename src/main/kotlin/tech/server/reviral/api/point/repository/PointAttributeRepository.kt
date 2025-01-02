@@ -22,9 +22,6 @@ import tech.server.reviral.api.point.model.enums.PointStatus
 @Repository
 interface PointAttributeRepository: JpaRepository<PointAttribute, Long> {
 
-    @Query("SELECT SUM(attr.point) FROM PointAttribute attr WHERE attr.user =: user AND attr.status NOT IN (: status)")
-    fun findSumOfPointByUserAndStatus(
-        @Param("user") user: User, @Param("status") status: List<PointStatus>
-    ): Int
+    fun findByUser(user: User): PointAttribute
 
 }

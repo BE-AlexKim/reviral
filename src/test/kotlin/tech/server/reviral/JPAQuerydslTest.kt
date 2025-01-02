@@ -178,6 +178,17 @@ class JPAQuerydslTest(
 //        println("GROUP :::: $group")
     }
 
+    @Test
+    @DisplayName("masking")
+    fun mask() {
+        val mask = "102010439392"
+
+        val visual = mask.substring(0,mask.lastIndex-4)
+        val masking = "*".repeat(5)
+
+        println(visual+masking)
+    }
+
     @DisplayName("Point")
     @Test
     @Transactional

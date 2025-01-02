@@ -675,11 +675,11 @@ class CampaignService constructor(
         ).fetchOne() ?: 0 ).toInt()
 
         val myCampaignUserInfo = MyCampaignResponseDTO.MyCampaignUserInfo(
-            username = user.name,
+            name = user.name,
             loginId = user.username,
             expectPoint = expectPoint,
-            changeTotalPoint = changeTotalPoint,
-            userPoint = point.remainPoint
+            totalPoint = changeTotalPoint,
+            remainPoint = point.remainPoint
         )
 
         return MyCampaignResponseDTO(

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.account.model.dto.ReloadRequestDTO
 import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
+import tech.server.reviral.api.account.model.dto.UserInfoResponseDTO
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
@@ -16,7 +17,6 @@ import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.security.JwtRedisRepository
 import tech.server.reviral.common.config.security.JwtToken
 import tech.server.reviral.common.config.security.JwtTokenProvider
-import java.util.UUID
 
 /**
  * packageName    : tech.server.reviral.api.account.service
@@ -54,6 +54,30 @@ class AccountService constructor(
     @Throws(BasicException::class)
     fun isLoginIdDuplicated(loginId: String): Boolean {
         return accountRepository.existsUserByLoginId(loginId)
+    }
+
+    @Transactional
+    @Throws(BasicException::class)
+    fun getUserInfo(username: String): UserInfoResponseDTO {
+        val user = accountRepository.findByLoginId(username)
+            ?: throw BasicException(BasicError.USER_NOT_EXIST)
+
+        val phoneRegex = Regex("(\\d{3})(\\d{4})(\\d{4})")
+
+        val phoneNumber = phoneRegex.replace(user.phone) { matchResult ->
+            val ( part1, part2, part3 ) = matchResult.destructured
+            "${part1}-${part2}-${part3[0]}***"
+        }
+
+        val accountNumber = user.account?.substring(0, user.account.lastIndex - 4)
+        accountNumber?.plus("*".repeat(5))
+
+        return UserInfoResponseDTO(
+            phoneNumber = phoneNumber,
+            address = user.address,
+            bankCode = user.bankCode,
+            accountNumber = accountNumber
+        )
     }
 
     /**
