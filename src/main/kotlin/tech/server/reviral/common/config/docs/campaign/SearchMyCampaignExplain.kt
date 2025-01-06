@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.MediaType
 import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
+import tech.server.reviral.api.campaign.model.dto.MyCampaignResponseDTO
 import java.lang.annotation.Inherited
 
 /**
@@ -38,7 +39,7 @@ import java.lang.annotation.Inherited
         description = "OK",
         content = [
             Content(
-                schema = Schema(implementation = CampaignCardResponseDTO::class),
+                schema = Schema(implementation = MyCampaignResponseDTO::class),
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(

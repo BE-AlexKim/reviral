@@ -29,5 +29,7 @@ object BasicExceptionMessage {
     const val USERNAME_DUPLICATED = "이미 존재하는 아이디입니다."
     const val USER_CREDENTIALS_NOT_MATCH = "비밀번호가 일치하지 않습니다."
     const val USER_ALREADY_EXIST = "이미 사용중인 계정입니다."
+    const val AUTHORIZED_EMAIL = "인증코드를 재발송하여 다시 시도해주세요."
+    const val AUTHORIZED_CODE_NOT_MATCH = "인증코드가 일치하지 않습니다."
 
 }

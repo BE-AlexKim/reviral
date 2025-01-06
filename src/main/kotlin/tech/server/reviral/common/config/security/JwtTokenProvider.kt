@@ -65,6 +65,7 @@ class JwtTokenProvider(
             .setIssuedAt(issuedAt)
             .claim("username",user.loginId)
             .claim("roles",user.auth)
+            .claim("isEmail", user.isEmailAuthorized)
             .setExpiration(accessTokenExpiredDate)
             .signWith(key, algorithm)
             .compact()

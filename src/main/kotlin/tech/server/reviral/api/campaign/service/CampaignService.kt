@@ -111,6 +111,7 @@ class CampaignService constructor(
             .from(qCampaign)
             .join(qCampaignDetails).on(qCampaignDetails.campaign.id.eq(qCampaign.id))
             .leftJoin(qCampaignEnroll).on(qCampaignEnroll.options.campaign.id.eq(qCampaign.id))
+            .distinct()
 
         val booleanBuilder = BooleanBuilder()
 
@@ -119,21 +120,21 @@ class CampaignService constructor(
             when(status) {
                 "wait" -> {
                     booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.WAIT))
-                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
-                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(now))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(now))
                 }
                 "progress" -> {
                     booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.PROGRESS))
-                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
-                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(now))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(now))
                 }
                 "finish" -> {
                     booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.FINISH))
                 }
                 "recruitment" -> {
                     booleanBuilder.and(qCampaign.campaignStatus.eq(CampaignStatus.RECRUITMENT))
-                    booleanBuilder.and(qCampaignDetails.activeDate.before(LocalDate.now()))
-                    booleanBuilder.and(qCampaignDetails.finishDate.after(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.activeDate.before(now))
+                    booleanBuilder.and(qCampaignDetails.finishDate.after(now))
                 }
             }
         }
@@ -175,13 +176,13 @@ class CampaignService constructor(
                                 Long::class.java,
                                 "DATEDIFF({0}, {1})",
                                 qCampaignDetails.finishDate,
-                                Expressions.constant(LocalDate.now())
+                                Expressions.constant(now)
                             ).asc()
                         )
                         .fetch()
                 }
                 "today" -> {
-                    booleanBuilder.and(qCampaignDetails.activeDate.eq(LocalDate.now()))
+                    booleanBuilder.and(qCampaignDetails.activeDate.eq(now))
                 }
 
                 "best" -> {
@@ -212,6 +213,7 @@ class CampaignService constructor(
                                 Expressions.constant(LocalDate.now())
                             ).asc()
                         )
+                        .distinct()
                         .fetch()
                 }
             }
@@ -303,6 +305,7 @@ class CampaignService constructor(
                 qCampaignOptions.id,
                 qCampaignSubOptions.id
             )
+            .distinct()
             .fetch()
 
         val groupBy = query.groupBy { it.campaignId }
@@ -333,7 +336,7 @@ class CampaignService constructor(
                             )
                         }
                 )
-            }
+            }.distinctBy { it.campaignId }
         return groupBy.first()
     }
 
@@ -630,15 +633,14 @@ class CampaignService constructor(
         val enrollCampaigns = campaignEnrollRepository.findByUser(user)
 
         val myCampaigns = enrollCampaigns
-            ?.filter {
-                it.enrollStatus != EnrollStatus.COMPLETE
-            }?.map {
+            ?.map {
             MyCampaignResponseDTO.MyCampaigns(
-                campaignId = it.campaign?.id,
+                campaignId = it.id.id,
                 campaignStatus = it.enrollStatus,
                 registerDate = it.createAt,
                 campaignImgUrl = it.campaign?.details?.first()?.campaignImgUrl,
-                campaignTitle = it.campaign?.campaignTitle
+                campaignTitle = it.campaign?.campaignTitle,
+                campaignLink = it.campaign?.details?.first()?.campaignUrl
             )
         }
 

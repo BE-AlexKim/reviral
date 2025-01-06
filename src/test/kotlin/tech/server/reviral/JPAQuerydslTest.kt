@@ -21,6 +21,7 @@ import tech.server.reviral.api.campaign.model.entity.QCampaignSubOptions
 import tech.server.reviral.api.point.model.entity.QPointAttribute
 import tech.server.reviral.api.point.model.entity.QPointExchange
 import tech.server.reviral.api.point.model.enums.PointStatus
+import tech.server.reviral.common.config.mail.EmailService
 import java.time.LocalDate
 
 /**
@@ -39,6 +40,9 @@ class JPAQuerydslTest(
 ) {
     @Autowired
     lateinit var queryFactory: JPAQueryFactory
+
+    @Autowired
+    lateinit var emailService: EmailService
 
     @DisplayName("JOIN TEST")
     @Test
@@ -214,5 +218,18 @@ class JPAQuerydslTest(
             ).fetch()
 
         println("QUERY ::::: $query")
+    }
+
+    @Test
+    @DisplayName("Send Email")
+    fun send() {
+
+        val send = emailService.send(
+            "joy585@naver.com",
+            "[리바이럴] 회원가입 인증을 위한 인증번호 안내",
+            "auth",
+            hashMapOf("code" to "12345","username" to "joy585@naver.com")
+        )
+
     }
 }

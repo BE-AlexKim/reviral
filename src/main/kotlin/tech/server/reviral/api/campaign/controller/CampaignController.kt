@@ -107,9 +107,7 @@ class CampaignController constructor(
      */
     @GetMapping("/users/{userId}")
     @SearchMyCampaignExplain
-    fun getMyCampaigns(
-        @PathVariable userId: Long
-    ): ResponseEntity<WrapResponseEntity<MyCampaignResponseDTO>> {
+    fun getMyCampaigns(@PathVariable userId: Long): ResponseEntity<WrapResponseEntity<MyCampaignResponseDTO>> {
         val myCampaigns = campaignService.getMyCampaigns(userId)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "myCampaigns", myCampaigns)
     }

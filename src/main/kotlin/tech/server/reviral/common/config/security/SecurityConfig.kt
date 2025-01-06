@@ -62,8 +62,11 @@ class SecurityConfig(
             ).permitAll()
 
             it.requestMatchers(
-                HttpMethod.POST,"/api/v1/campaign/save"
+                HttpMethod.POST,"/api/v1/campaign/save",
+                "/api/v1/users/email/verify",
+                "/api/v1/users/email/authorized"
             ).permitAll()
+
             it.requestMatchers(
                 HttpMethod.PUT, "/api/v1/campaign/{campaignId}"
             ).permitAll()

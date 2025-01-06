@@ -32,6 +32,12 @@ repositories {
 
 dependencies {
 
+	// Thymeleaf
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+
+	// Spring Mail
+	implementation("org.springframework.boot:spring-boot-starter-mail")
+
 	// QueryDSL 추가
 	implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
 	kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")

@@ -1,5 +1,6 @@
 package tech.server.reviral.api.point.model.dto
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import tech.server.reviral.api.point.model.enums.ExchangeStatus
 import java.time.LocalDateTime
@@ -39,6 +40,7 @@ data class PointAttributeResponseDTO(
         @Schema(description = "포인트 상태")
         val pointStatus: ExchangeStatus,
         @Schema(description = "신청/전환 일자")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         val createAt: LocalDateTime,
         @Schema(description = "포인트 설명")
         val exchangeDesc: String,

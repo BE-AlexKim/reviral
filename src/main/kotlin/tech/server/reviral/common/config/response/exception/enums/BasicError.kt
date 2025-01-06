@@ -40,6 +40,9 @@ enum class BasicError(
     USER_CREDENTIALS_NOT_MATCH(HttpStatus.BAD_REQUEST, "BE0013", BasicExceptionMessage.USER_CREDENTIALS_NOT_MATCH),
     USER_ALREADY_EXIST(HttpStatus.BAD_REQUEST,"BE0014",BasicExceptionMessage.USER_ALREADY_EXIST),
 
+    AUTHORIZED_EMAIL(HttpStatus.BAD_REQUEST, "BE0015", BasicExceptionMessage.AUTHORIZED_EMAIL),
+    AUTHORIZED_CODE_NOT_MATCH(HttpStatus.BAD_REQUEST, "BE0016", BasicExceptionMessage.AUTHORIZED_CODE_NOT_MATCH),
+
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E00002", BasicExceptionMessage.UNAUTHORIZED);
 
     override fun getCode(): String {

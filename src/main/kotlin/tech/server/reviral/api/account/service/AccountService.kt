@@ -5,13 +5,12 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tech.server.reviral.api.account.model.dto.ReloadRequestDTO
-import tech.server.reviral.api.account.model.dto.SignInRequestDTO
-import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
-import tech.server.reviral.api.account.model.dto.UserInfoResponseDTO
+import tech.server.reviral.api.account.model.dto.*
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
+import tech.server.reviral.common.config.mail.EmailService
+import tech.server.reviral.common.config.mail.SetEmail
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.security.JwtRedisRepository
@@ -35,7 +34,8 @@ class AccountService constructor(
     private val authenticationManagerBuilder: AuthenticationManagerBuilder,
     private val jwtTokenProvider: JwtTokenProvider,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtRedisRepository: JwtRedisRepository
+    private val jwtRedisRepository: JwtRedisRepository,
+    private val emailService: EmailService
 ) {
 
     @Transactional
@@ -56,6 +56,11 @@ class AccountService constructor(
         return accountRepository.existsUserByLoginId(loginId)
     }
 
+    /**
+     * 사용자 설정 정보 조회
+     * @param username: String
+     * @return UserInfoResponseDTO
+     */
     @Transactional
     @Throws(BasicException::class)
     fun getUserInfo(username: String): UserInfoResponseDTO {
@@ -88,7 +93,6 @@ class AccountService constructor(
     @Transactional
     @Throws(Exception::class)
     fun signIn(request: SignInRequestDTO): JwtToken {
-
         // UsernamePasswordAuthenticationToken 발급
         val authenticationToken = UsernamePasswordAuthenticationToken(request.loginId, request.password )
         // 인증 객체 생성
@@ -97,6 +101,51 @@ class AccountService constructor(
         val user = authentication.principal as User
         // 사용자 정보 객체로 변환 후, 토큰 생성
         return jwtTokenProvider.getJwtToken(user)
+    }
+
+    /**
+     * 인증코드 발송
+     * @param request: EmailAuthorizedRequestDTO
+     * @return Boolean
+     * @exception RuntimeException
+     */
+    @Transactional
+    @Throws(RuntimeException::class)
+    fun sendAuthorizedToEmail( request: EmailAuthorizedRequestDTO ): Boolean {
+        val values = SetEmail.AUTHORIZED.values()
+        emailService.send(request.email, SetEmail.AUTHORIZED.getSubject(), SetEmail.AUTHORIZED.template(),values)
+        val code = values["code"]!!
+        jwtRedisRepository.setAuthorizationCode(request.email, code, 300000)
+        return true
+    }
+
+    /**
+     * 인증코드 검사
+     * @param request: AuthorizeCodeRequestDTO
+     * @return Boolean
+     * @exception BasicException
+     */
+    @Transactional
+    @Throws(BasicException::class)
+    fun verifyAuthorizedEmailCode( request: AuthorizeCodeRequestDTO ): Boolean {
+        val code = jwtRedisRepository.getAuthorizationCode(request.email)
+            ?: throw BasicException(BasicError.AUTHORIZED_EMAIL)
+
+        if ( code != request.code ) {
+            throw BasicException(BasicError.AUTHORIZED_CODE_NOT_MATCH)
+        }else {
+            return true
+        }
+    }
+
+    /**
+     * 로그아웃 서비스
+     * @param userId
+     */
+    @Transactional
+    @Throws(RuntimeException::class)
+    fun logout(userId: Long) {
+        jwtRedisRepository.delete(userId.toString())
     }
 
     /**
@@ -131,8 +180,7 @@ class AccountService constructor(
 
     /**
      * 토큰 재발급 서비스
-     * @param accessToken: String,
-     * @param enteredRefreshToken: String
+     * @param request: ReloadRequestDTO
      * @return JwtToken
      */
     @Transactional
@@ -154,4 +202,5 @@ class AccountService constructor(
             }
         }
     }
+
 }

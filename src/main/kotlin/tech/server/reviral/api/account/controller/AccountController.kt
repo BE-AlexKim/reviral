@@ -11,10 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import tech.server.reviral.api.account.model.dto.ReloadRequestDTO
-import tech.server.reviral.api.account.model.dto.SignInRequestDTO
-import tech.server.reviral.api.account.model.dto.SignUpRequestDTO
-import tech.server.reviral.api.account.model.dto.UserInfoResponseDTO
+import tech.server.reviral.api.account.model.dto.*
 import tech.server.reviral.api.account.service.AccountService
 import tech.server.reviral.common.config.docs.account.*
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
@@ -66,11 +63,31 @@ class AccountController constructor(
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "jwt",reissueToken)
     }
 
+    @PostMapping("/logout/{userId}")
+    @LogoutExplain
+    fun logout(@PathVariable userId: Long) {
+        accountService.logout(userId)
+    }
+
     @PostMapping("/info/{username}")
     @UserInfoExplain
     fun getUserInfo(@PathVariable username: String): ResponseEntity<WrapResponseEntity<UserInfoResponseDTO>> {
         val userInfo = accountService.getUserInfo(username)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "userInfo", userInfo)
+    }
+
+    @PostMapping("/email/authorized")
+    @SendAuthorizedEmailExplain
+    fun sendAuthorizedCode(@RequestBody request: EmailAuthorizedRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val send = accountService.sendAuthorizedToEmail(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSend", send)
+    }
+
+    @PostMapping("/email/verify")
+    @VerifyEmailAuthorizedCodeExplain
+    fun verifyAuthorizedCode( @RequestBody request: AuthorizeCodeRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val isVerifyCode = accountService.verifyAuthorizedEmailCode(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isVerify", isVerifyCode)
     }
 
 }

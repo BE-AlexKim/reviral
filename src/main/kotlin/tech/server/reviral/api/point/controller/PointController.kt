@@ -3,12 +3,16 @@ package tech.server.reviral.api.point.controller
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import tech.server.reviral.api.point.model.dto.ExchangePointRequestDTO
+import tech.server.reviral.api.point.model.dto.PointAttributeResponseDTO
 import tech.server.reviral.api.point.service.PointService
 import tech.server.reviral.common.config.docs.point.ExchangePointExplain
+import tech.server.reviral.common.config.docs.point.PointAttributeExplain
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 
 /**
@@ -33,5 +37,12 @@ class PointController constructor(
     fun setExchangePoint(request: ExchangePointRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
         val isExchange = pointService.setExchangePoint(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isExchange", isExchange)
+    }
+
+    @GetMapping("/{userId}")
+    @PointAttributeExplain
+    fun getPointAttribute(@PathVariable userId: Long): ResponseEntity<WrapResponseEntity<PointAttributeResponseDTO>> {
+        val pointAttribute = pointService.getPointAttributes(userId)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"pointAttributes", pointAttribute)
     }
 }

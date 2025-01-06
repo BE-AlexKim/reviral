@@ -13,6 +13,25 @@ spring:
         max-page-size: 20
         page-parameter: page
         size-parameter: size
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    check-template-location: true
+    cache: false
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    protocol: smtp
+    username: reviralcompany@gmail.com
+    password: pfugdgbrtbdepssx
+    properties:
+      debug: true
+      smtp.ssl.enable: true
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: true
+    default-encoding: UTF-8
 
 logging:
   config: classpath:log/logger-${spring.profiles.active}.xml

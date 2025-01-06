@@ -59,6 +59,8 @@ data class MyCampaignResponseDTO(
         val registerDate: LocalDateTime?,
         @Schema(description = "캠페인 이미지")
         val campaignImgUrl: String?,
+        @Schema(description = "캠페인 링크")
+        val campaignLink: String?,
         @Schema(description = "캠페인 제목")
         val campaignTitle: String?
     )

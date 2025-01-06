@@ -84,11 +84,18 @@ class PointService constructor(
         return true
     }
 
+    /**
+     * 포인트 이력 조회 서비스
+     * @param loginId: Long
+     * @exception PointException
+     * @exception BasicException
+     * @return PointAttributeResponseDTO
+     */
     @Transactional
     @Throws(PointException::class, BasicException::class)
-    fun getPointAttributes(loginId: String): PointAttributeResponseDTO {
-        val user = accountRepository.findByLoginId(loginId)
-            ?: throw BasicException(BasicError.USER_NOT_EXIST)
+    fun getPointAttributes(loginId: Long): PointAttributeResponseDTO {
+        val user = accountRepository.findById(loginId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
         val point = pointRepository.findByUser(user)
             ?: throw PointException(PointError.POINT_IS_NOT_EXIST)
