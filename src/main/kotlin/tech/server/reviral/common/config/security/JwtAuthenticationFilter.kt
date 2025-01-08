@@ -28,6 +28,7 @@ class JwtAuthenticationFilter(
 
     override fun doFilterInternal( request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain ) {
         val token = jwtTokenProvider.extractToken(request)
+        log.debug { "token ::::: $token" }
         if ( token.isEmpty ) {
             filterChain.doFilter(request, response)
             return

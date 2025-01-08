@@ -53,7 +53,7 @@ class RedisConfiguration(
     fun redisTemplate(): RedisTemplate<String, String>? {
         val redisTemplate = RedisTemplate<String, String>()
         redisTemplate.keySerializer = StringRedisSerializer()
-        redisTemplate.valueSerializer = GenericJackson2JsonRedisSerializer() // Json 포맷으로 저장
+        redisTemplate.valueSerializer = StringRedisSerializer() // Json 포맷으로 저장
         redisTemplate.connectionFactory = redisConnectionFactory()
         return redisTemplate
     }

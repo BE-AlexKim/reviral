@@ -1,5 +1,7 @@
 package tech.server.reviral
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.Expressions
@@ -10,7 +12,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
+import tech.server.reviral.api.account.model.dto.EmailAuthorizedRequestDTO
 import tech.server.reviral.api.account.model.entity.QUser
+import tech.server.reviral.api.account.service.AccountService
 import tech.server.reviral.api.campaign.model.dto.CampaignCardResponseDTO
 import tech.server.reviral.api.campaign.model.dto.CampaignDetailResponseDTO
 import tech.server.reviral.api.campaign.model.entity.QCampaign
@@ -22,7 +26,9 @@ import tech.server.reviral.api.point.model.entity.QPointAttribute
 import tech.server.reviral.api.point.model.entity.QPointExchange
 import tech.server.reviral.api.point.model.enums.PointStatus
 import tech.server.reviral.common.config.mail.EmailService
+import tech.server.reviral.common.config.security.JwtClaims
 import java.time.LocalDate
+import java.util.Base64
 
 /**
  *packageName    : tech.server.reviral
@@ -43,6 +49,9 @@ class JPAQuerydslTest(
 
     @Autowired
     lateinit var emailService: EmailService
+
+    @Autowired
+    lateinit var accountService: AccountService
 
     @DisplayName("JOIN TEST")
     @Test
@@ -232,4 +241,12 @@ class JPAQuerydslTest(
         )
 
     }
+
+    @DisplayName("redis")
+    @Test
+    fun redis() {
+        val send = accountService.sendAuthorizedToEmail(EmailAuthorizedRequestDTO("joy585@naver.com"))
+        println(send)
+    }
+
 }

@@ -1,5 +1,6 @@
 package tech.server.reviral.common.config.security
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
@@ -15,8 +16,7 @@ import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import java.nio.charset.StandardCharsets
 import java.security.Key
-import java.util.Date
-import java.util.Optional
+import java.util.*
 
 /**
  *packageName    : tech.server.reviral.common.config.security
@@ -65,17 +65,21 @@ class JwtTokenProvider(
             .setIssuedAt(issuedAt)
             .claim("username",user.loginId)
             .claim("roles",user.auth)
-            .claim("isEmail", user.isEmailAuthorized)
             .setExpiration(accessTokenExpiredDate)
             .signWith(key, algorithm)
             .compact()
 
         val refreshToken = Jwts.builder()
+            .setHeader(header)
+            .setSubject(userId)
+            .setIssuer("Reviral")
+            .setIssuedAt(issuedAt)
+            .claim("username", user.loginId)
             .setExpiration(refreshTokenExpiredDate)
-            .signWith(key, SignatureAlgorithm.HS256)
+            .signWith(key, algorithm)
             .compact()
 
-        jwtRedisRepository.set(userId, refreshToken, refreshExpiredTime)
+        jwtRedisRepository.set(refreshToken,userId, refreshExpiredTime)
 
         return JwtToken(
             accessToken = accessToken,
@@ -146,8 +150,23 @@ class JwtTokenProvider(
     fun decryptClaims(token: String): Optional<Claims> {
         return try {
             Optional.of(Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).body)
-        }catch (e: ExpiredJwtException) {
+        }catch (e: SignatureException) {
             Optional.empty<Claims>()
+        }
+    }
+
+    fun getClaim(token: String): JwtClaims {
+        try {
+            val encode = token.split(".")[1]
+            val decodeByte = Base64.getDecoder().decode(encode)
+            val decode = String(decodeByte)
+
+            println("DECODE ::: $decode")
+
+            val obj = ObjectMapper()
+            return obj.readValue(decode, JwtClaims::class.java)
+        }catch (e: RuntimeException) {
+            throw BasicException(BasicError.TOKEN_ERROR)
         }
     }
 }

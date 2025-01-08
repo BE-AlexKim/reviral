@@ -112,8 +112,8 @@ class AccountService constructor(
     @Transactional
     @Throws(RuntimeException::class)
     fun sendAuthorizedToEmail( request: EmailAuthorizedRequestDTO ): Boolean {
-        val values = SetEmail.AUTHORIZED.values()
-        emailService.send(request.email, SetEmail.AUTHORIZED.getSubject(), SetEmail.AUTHORIZED.template(),values)
+        val values = SetEmail.EMAIL_AUTHORIZED.values(request.email)
+        emailService.send(request.email, SetEmail.EMAIL_AUTHORIZED.getSubject(), SetEmail.EMAIL_AUTHORIZED.template(),values)
         val code = values["code"]!!
         jwtRedisRepository.setAuthorizationCode(request.email, code, 300000)
         return true
@@ -131,10 +131,11 @@ class AccountService constructor(
         val code = jwtRedisRepository.getAuthorizationCode(request.email)
             ?: throw BasicException(BasicError.AUTHORIZED_EMAIL)
 
-        if ( code != request.code ) {
-            throw BasicException(BasicError.AUTHORIZED_CODE_NOT_MATCH)
+        return if ( code != request.code ) {
+            false
         }else {
-            return true
+            jwtRedisRepository.deleteAuthorizationCode(request.email)
+            true
         }
     }
 
@@ -186,20 +187,19 @@ class AccountService constructor(
     @Transactional
     @Throws(BasicException::class)
     fun reloadUserByRefreshToken( request: ReloadRequestDTO ): JwtToken {
-        val isEnableAccessToken = jwtTokenProvider.decryptClaims(request.accessToken)
-        if ( isEnableAccessToken.isEmpty ) { // 공백일 경우
-            throw BasicException(BasicError.TOKEN_ERROR)
-        }else {
-            val claims = isEnableAccessToken.get() // Claims 정보 조회
-            val cachedRefreshToken = jwtRedisRepository.get(claims.subject)
-                ?: throw BasicException(BasicError.EXPIRED_REFRESH_TOKEN)
 
-            if (cachedRefreshToken == request.refreshToken) { // 재발급 토큰 비교값이 동일할 경우
-                val username = claims["loginId"].toString()
-                return jwtTokenProvider.getJwtToken(loadUserByUsername(username))
-            }else {
-                throw BasicException(BasicError.TOKEN_NOT_MATCH)
-            }
+        val userId = jwtRedisRepository.get(request.refreshToken)
+            ?: throw BasicException(BasicError.EXPIRED_REFRESH_TOKEN)
+
+        val claim = jwtTokenProvider.getClaim(request.refreshToken)
+
+        if (userId == claim.sub && claim.iss == "Reviral") { // 재발급 토큰 비교값이 동일할 경우
+            val username = claim.username
+            val token = jwtTokenProvider.getJwtToken(loadUserByUsername(username))
+            jwtRedisRepository.delete(request.refreshToken)
+            return token
+        }else {
+            throw BasicException(BasicError.TOKEN_NOT_MATCH)
         }
     }
 

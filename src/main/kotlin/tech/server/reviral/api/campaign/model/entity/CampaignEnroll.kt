@@ -4,7 +4,6 @@ import jakarta.persistence.*
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
 import tech.server.reviral.api.account.model.entity.User
-import tech.server.reviral.api.campaign.model.entity.pk.CampaignEnrollId
 import tech.server.reviral.api.campaign.model.enums.EnrollStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -26,8 +25,9 @@ import java.util.*
 @Comment("캠페인 참여 정보 테이블")
 data class CampaignEnroll(
 
-    @EmbeddedId
-    val id: CampaignEnrollId,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "campaign_enroll_id")
+    val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "user_id")
@@ -50,11 +50,19 @@ data class CampaignEnroll(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "enroll_status")
-    val enrollStatus: EnrollStatus? = null,
+    var enrollStatus: EnrollStatus? = null,
 
     @Column(name = "enroll_date")
     @Comment("참여 일자")
     val enrollDate: LocalDate = LocalDate.now(),
+
+    @Column(name = "order_number")
+    @Comment("상품 주문번호")
+    var orderNo: String? = null,
+
+    @Column(name = "review_img_url")
+    @Comment("리뷰 캡처 이미지 링크")
+    var reviewImgUrl: String? = null,
 
     @Column(name = "create_at")
     @Comment("최초 생성 일시")
@@ -62,7 +70,7 @@ data class CampaignEnroll(
 
     @Column(name = "update_at")
     @Comment("최종 수정 일시")
-    val updateAt: LocalDateTime? = null
+    var updateAt: LocalDateTime? = null
 
 ) {
     override fun equals(other: Any?): Boolean {

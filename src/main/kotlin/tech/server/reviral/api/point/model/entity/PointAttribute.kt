@@ -29,10 +29,7 @@ data class PointAttribute(
     val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    @JoinColumns(value = [
-        JoinColumn(name = "campaign_enroll_id", referencedColumnName = "campaign_enroll_id"),
-        JoinColumn(name = "campaign_enroll_count", referencedColumnName = "campaign_enroll_count")
-    ])
+    @JoinColumn(name = "campaign_enroll_id")
     val campaignEnroll: CampaignEnroll,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])

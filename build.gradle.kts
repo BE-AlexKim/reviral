@@ -32,6 +32,9 @@ repositories {
 
 dependencies {
 
+	// AWS S3
+	implementation ("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
+
 	// Thymeleaf
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 

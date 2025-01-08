@@ -35,12 +35,12 @@ class UsernameValidator: ConstraintValidator<Username, String>{
         }
 
         // 아아디가 형식에 맞지 않을 경우.
-        if (!value.matches(Regex("^[a-zA-Z0-9]{4,16}$"))) {
-            context?.disableDefaultConstraintViolation()
-            context?.buildConstraintViolationWithTemplate("아이디는 영문 숫자 4-16자 사이로 입력해주세요.")
-                ?.addConstraintViolation()
-            return false
-        }
+//        if (!value.matches(Regex("^[a-zA-Z0-9]{4,16}$"))) {
+//            context?.disableDefaultConstraintViolation()
+//            context?.buildConstraintViolationWithTemplate("아이디는 영문 숫자 4-16자 사이로 입력해주세요.")
+//                ?.addConstraintViolation()
+//            return false
+//        }
 
         return true
     }

@@ -79,10 +79,6 @@ class User(
     @Comment("쿠팡 아이디")
     val cpId: String? = null,
 
-    @Column(name = "is_email_authorized")
-    @Comment("이메일 인증처리")
-    val isEmailAuthorized: Boolean = false,
-
     @Column(name = "is_event")
     val isEvent: Boolean = false,
 

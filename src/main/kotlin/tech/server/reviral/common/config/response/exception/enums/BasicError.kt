@@ -43,6 +43,9 @@ enum class BasicError(
     AUTHORIZED_EMAIL(HttpStatus.BAD_REQUEST, "BE0015", BasicExceptionMessage.AUTHORIZED_EMAIL),
     AUTHORIZED_CODE_NOT_MATCH(HttpStatus.BAD_REQUEST, "BE0016", BasicExceptionMessage.AUTHORIZED_CODE_NOT_MATCH),
 
+    FILE_IMG_EXTENSION(HttpStatus.BAD_REQUEST, "BE0017", BasicExceptionMessage.FILE_IMG_EXTENSION),
+    FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "BE0018", BasicExceptionMessage.FILE_UPLOAD_FAIL),
+
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E00002", BasicExceptionMessage.UNAUTHORIZED);
 
     override fun getCode(): String {

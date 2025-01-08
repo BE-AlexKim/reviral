@@ -31,5 +31,7 @@ object BasicExceptionMessage {
     const val USER_ALREADY_EXIST = "이미 사용중인 계정입니다."
     const val AUTHORIZED_EMAIL = "인증코드를 재발송하여 다시 시도해주세요."
     const val AUTHORIZED_CODE_NOT_MATCH = "인증코드가 일치하지 않습니다."
+    const val FILE_IMG_EXTENSION = "지원하지 않는 확장자입니다."
+    const val FILE_UPLOAD_FAIL = "파일 업로드에 실패하였습니다."
 
 }

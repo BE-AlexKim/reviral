@@ -1,42 +1,47 @@
-package tech.server.reviral.common.config.docs.account
+package tech.server.reviral.common.config.docs.campaign
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.MediaType
+import tech.server.reviral.api.campaign.model.dto.EnrollProductOrderNoRequestDTO
 import java.lang.annotation.Inherited
 
 /**
- *packageName    : tech.server.reviral.common.config.docs.account
- * fileName       : JwtReloadExplain
+ *packageName    : tech.server.reviral.common.config.docs.campaign
+ * fileName       : UploadProductOrderNoExplain
  * author         : joy58
- * date           : 2024-11-28
+ * date           : 2025-01-08
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2024-11-28        joy58       최초 생성
+ * 2025-01-08        joy58       최초 생성
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @Operation(
-    summary = "사용자 재인증",
-    description = "사용자 재인증 토큰으로 새로운 토큰을 발급한다.",
+    summary = "사용자 주문번호 등록 서비스",
+    description = "회원가입 시, 사용자가 주문한 주문번호를 등록합니다.",
     requestBody = RequestBody(
-        description = "회원 정보를 등록합니다.",
+        description = "주문번호 등록 서비스",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = Schema(implementation = EnrollProductOrderNoRequestDTO::class),
                 examples = [
                     ExampleObject(
-                        name = "재발급 테스트 - 01",
+                        name = "회원가입 정보 예시",
                         value = """
                                 {
-                                  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjYyMjEyNzg1Nzk3fQ.VTdZRWmbKnz4YqE1aPHZAFU7b2_0XBWF1PdhAZMyQHc"
+                                  "userId" : 1,
+                                  "campaignEnrollId": 1,
+                                  "orderNo": "203029841828332"
                                 }
                         """
                     )
@@ -59,9 +64,7 @@ import java.lang.annotation.Inherited
                             {
                                 "status": 200,
                                 "data": {
-                                    "grantType": "Bearer",
-                                    "accessToken": "엑세스 토큰",
-                                    "refreshToken": "리프레시 토큰"
+                                    "isSave": true
                                 },
                                 "timestamp": "2024-11-27 23:59:59"
                             }
@@ -72,42 +75,31 @@ import java.lang.annotation.Inherited
         ]
     ),
     ApiResponse(
-        responseCode = "401",
-        description = "UNAUTHORIZED",
+        responseCode = "400",
+        description = "BAD_REQUEST",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "",
-                        description = "",
+                        name = "캠페인 참여 오류",
+                        description = "해당 캠페인 참여 일련번호가 존재하지 않습니다.",
                         value = """
                             {
-                                "status": 401,
-                                "code": "BE0008",
-                                "message": "만료된 접근입니다.",
+                                "status": 400,
+                                "code": "CP0008",
+                                "message": "해당 캠페인은 참여중이지 않습니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
-                    ), ExampleObject(
-                        name = "재발급 토큰 불일치 오류",
-                        description = "리프레시 토큰 불일치",
+                    ),ExampleObject(
+                        name = "캠페인 참여 오류",
+                        description = "해당 캠페인 참여 일련번호가 존재하지 않습니다.",
                         value = """
                             {
-                                "status": 401,
-                                "code": "BE0009",
-                                "message": "잘못된 접근입니다.",
-                                "timestamp": "2024-11-27 23:59:59"
-                            }
-                        """
-                    ), ExampleObject(
-                        name = "존재하지 않는 토큰",
-                        description = "엑세스 토큰이 존재하지 않을 경우 발생합니다.",
-                        value = """
-                            {
-                                "status": 401,
-                                "code": "BE0007",
-                                "message": "잘못된 접근입니다.",
+                                "status": 400,
+                                "code": "CP0008",
+                                "message": "해당 캠페인은 참여중이지 않습니다.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """
@@ -139,4 +131,4 @@ import java.lang.annotation.Inherited
         ]
     )
 )
-annotation class JwtReloadExplain()
+annotation class UploadProductOrderNoExplain()

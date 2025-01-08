@@ -38,12 +38,17 @@ class JwtRedisRepository constructor(
 
     @Transactional
     fun setAuthorizationCode(email: String, code: String, expiration: Long) {
-        redisTemplate.opsForValue().set("authorized_$email", code, expiration)
+        redisTemplate.opsForValue().set("authorized_$email", code, expiration, TimeUnit.MILLISECONDS)
     }
 
     @Transactional
     fun getAuthorizationCode(email: String): String? {
         return redisTemplate.opsForValue().get("authorized_$email")
+    }
+
+    @Transactional
+    fun deleteAuthorizationCode(email: String) {
+        redisTemplate.delete("authorized_$email")
     }
 
 }

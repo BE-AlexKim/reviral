@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.campaign.service.CampaignService
 import tech.server.reviral.common.config.docs.campaign.*
@@ -112,4 +113,26 @@ class CampaignController constructor(
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "myCampaigns", myCampaigns)
     }
 
+    /**
+     * 사용자 후기 작성 서비스
+     * @param image: MultipartFile
+     * @param request: EnrollReviewRequestDTO
+     * @return Boolean: S3저장 성공 여부
+     */
+    @PostMapping(value = ["/review"], consumes = ["multipart/form-data"] )
+    @UploadReviewExplain
+    fun setReview(
+        @RequestPart("image") image: MultipartFile,
+        @RequestPart("request") request: EnrollReviewRequestDTO
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val review = campaignService.setReviewImage(image, request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", review)
+    }
+
+    @PostMapping("/order")
+    @UploadProductOrderNoExplain
+    fun setOrderNo(@RequestBody request: EnrollProductOrderNoRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val isSave = campaignService.setProductOrderNo(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", isSave)
+    }
 }

@@ -15,6 +15,5 @@ import io.swagger.v3.oas.annotations.media.Schema
  */
 @Schema(name = "토큰 재발급 요청 모델")
 data class ReloadRequestDTO(
-    val accessToken: String,
     val refreshToken: String
 )

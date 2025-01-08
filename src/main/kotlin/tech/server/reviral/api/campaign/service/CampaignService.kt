@@ -10,10 +10,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.campaign.model.entity.*
-import tech.server.reviral.api.campaign.model.entity.pk.CampaignEnrollId
 import tech.server.reviral.api.campaign.model.enums.*
 import tech.server.reviral.api.campaign.repository.*
 import tech.server.reviral.api.point.model.entity.Point
@@ -22,6 +22,7 @@ import tech.server.reviral.api.point.model.entity.QPointAttribute
 import tech.server.reviral.api.point.model.enums.PointStatus
 import tech.server.reviral.api.point.repository.PointAttributeRepository
 import tech.server.reviral.api.point.repository.PointRepository
+import tech.server.reviral.common.config.aws.AmazonS3Service
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.CampaignException
 import tech.server.reviral.common.config.response.exception.PointException
@@ -52,7 +53,8 @@ class CampaignService constructor(
     private val campaignEnrollRepository: CampaignEnrollRepository,
     private val pointRepository: PointRepository,
     private val pointAttributeRepository: PointAttributeRepository,
-    private val queryFactory: JPAQueryFactory
+    private val queryFactory: JPAQueryFactory,
+    private val amazonS3Service: AmazonS3Service
 ){
 
 
@@ -466,17 +468,14 @@ class CampaignService constructor(
         // 캠페인 등록
         val campaignEnroll = campaignEnrollRepository.save(
             CampaignEnroll(
-            id = CampaignEnrollId(
-                id = campaignEnrollRepository.count() + 1,
-                enrollCount = campaignEnrollRepository.countByUserAndCampaign(user, campaign),
-            ),
-            user = user,
-            campaign = campaign,
-            options = option,
-            subOptions = subOption,
-            enrollDate = LocalDate.now(),
-            enrollStatus = EnrollStatus.APPLY,
-        ))
+                user = user,
+                campaign = campaign,
+                options = option,
+                subOptions = subOption,
+                enrollDate = LocalDate.now(),
+                enrollStatus = EnrollStatus.APPLY,
+            )
+        )
 
         // 예상 적립 포인트 등록
         val point = pointRepository.findByUser(user)
@@ -635,7 +634,7 @@ class CampaignService constructor(
         val myCampaigns = enrollCampaigns
             ?.map {
             MyCampaignResponseDTO.MyCampaigns(
-                campaignId = it.id.id,
+                campaignId = it.id,
                 campaignStatus = it.enrollStatus,
                 registerDate = it.createAt,
                 campaignImgUrl = it.campaign?.details?.first()?.campaignImgUrl,
@@ -695,9 +694,80 @@ class CampaignService constructor(
     }
 
     /**
+     * 후기 작성 서비스
+     * @param image: MultipartFile
+     * @param request: EnrollReviewRequestDTO
+     * @return Boolean
+     * @exception CampaignException
+     */
+    @Transactional
+    @Throws(CampaignException::class)
+    fun setReviewImage(image: MultipartFile, request: EnrollReviewRequestDTO): Boolean {
+
+        val enroll = campaignEnrollRepository.findById(request.campaignEnrollId)
+            .orElseThrow { throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST) }
+
+        if ( enroll.user?.id != request.userId ) {
+            throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST)
+        }
+
+        // 해당 등록 캠페인 상태 정보
+        when ( enroll.enrollStatus ) {
+            // 상태값이 후기작성 상태일 경우
+            EnrollStatus.REVIEW -> {
+                // 캠페인 정보 조회 (일련번호 디렉토리 값으로 만들기 위해 조회)
+                val campaign = enroll.campaign
+                    ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
+                // AmazonS3 이미지 파일 업로드
+                val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}")
+                // 이미지 URL 업로드
+                enroll.reviewImgUrl = fileImgUrl
+                enroll.enrollStatus = EnrollStatus.INSPECT
+                enroll.updateAt = LocalDateTime.now()
+                this.campaignEnrollRepository.save(enroll)
+                return true
+            }
+            // 예외의 경우
+            else -> {
+                throw CampaignException(CampaignError.CAMPAIGN_REVIEW)
+            }
+        }
+    }
+
+    /**
+     * 주문번호 작성 서비스
+     * @param request: EnrollProductOrderNoRequestDTO
+     * @return Boolean
+     * @exception CampaignException
+     */
+    @Transactional
+    @Throws(CampaignException::class)
+    fun setProductOrderNo(request: EnrollProductOrderNoRequestDTO): Boolean {
+
+        val enroll = campaignEnrollRepository.findById(request.campaignEnrollId)
+            .orElseThrow { throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST) }
+
+        if ( enroll.user?.id != request.userId ) {
+            throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST)
+        }
+
+        return if ( enroll.enrollStatus == EnrollStatus.PROGRESS ) {
+            enroll.orderNo = request.orderNo
+            enroll.enrollStatus = EnrollStatus.REVIEW
+            enroll.updateAt = LocalDateTime.now()
+            this.campaignEnrollRepository.save(enroll)
+            return true
+        }else {
+            throw CampaignException(CampaignError.CAMPAIGN_ORDER_NO)
+        }
+    }
+
+    /**
+     * 시작일과 종료일의 차이 값
      * @param startDate: LocalDate,
      * @param endDate: LocalDate
      * @return Long
+     * @exception CampaignException
      */
     @Throws(CampaignException::class)
     private fun getLocalDateBetween(startDate: LocalDate, endDate: LocalDate): Long {
