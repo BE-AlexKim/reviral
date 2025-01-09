@@ -19,8 +19,10 @@ import tech.server.reviral.api.campaign.repository.*
 import tech.server.reviral.api.point.model.entity.Point
 import tech.server.reviral.api.point.model.entity.PointAttribute
 import tech.server.reviral.api.point.model.entity.QPointAttribute
+import tech.server.reviral.api.point.model.enums.ExchangeStatus
 import tech.server.reviral.api.point.model.enums.PointStatus
 import tech.server.reviral.api.point.repository.PointAttributeRepository
+import tech.server.reviral.api.point.repository.PointExchangeRepository
 import tech.server.reviral.api.point.repository.PointRepository
 import tech.server.reviral.common.config.aws.AmazonS3Service
 import tech.server.reviral.common.config.response.exception.BasicException
@@ -53,6 +55,7 @@ class CampaignService constructor(
     private val campaignEnrollRepository: CampaignEnrollRepository,
     private val pointRepository: PointRepository,
     private val pointAttributeRepository: PointAttributeRepository,
+    private val pointExchangeRepository: PointExchangeRepository,
     private val queryFactory: JPAQueryFactory,
     private val amazonS3Service: AmazonS3Service
 ){
@@ -437,12 +440,12 @@ class CampaignService constructor(
         val campaign = campaignRepository.findById(request.campaignId)
             .orElseThrow { throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST) }
 
-        val enroll = campaignEnrollRepository.findByCampaign(campaign)
+        val enroll = campaignEnrollRepository.findByCampaignAndUser(campaign,user)
+
         if (enroll.isNotEmpty()) { // 등록된 캠페인이 존재한다면?
             // 완료된 캠페인이 없는지 필터링
             val enrollNotCompletedCount = enroll
                 .count { it?.enrollStatus != EnrollStatus.COMPLETE }
-                .compareTo(0)
 
             // 완료되지 않은 캠페인이 존재하는 경우 에러를 뱉음.
             if (enrollNotCompletedCount != 0) {
@@ -665,22 +668,15 @@ class CampaignService constructor(
             )
             .from(qPointAttribute)
 
-        val expectPoint = ( query.where(
-            qPointAttribute.user.eq(user)
-                .and(qPointAttribute.status.eq(PointStatus.EXPECT))
-        ).fetchOne() ?: 0 ).toInt()
-
-        val changeTotalPoint = ( query.where(
-            qPointAttribute.user.eq(user)
-                .and(qPointAttribute.status.eq(PointStatus.COMPLETE))
-        ).fetchOne() ?: 0 ).toInt()
+        val exchange = pointExchangeRepository.findByUserAndStatus(user, ExchangeStatus.REQ)
 
         val myCampaignUserInfo = MyCampaignResponseDTO.MyCampaignUserInfo(
             name = user.name,
             loginId = user.username,
-            expectPoint = expectPoint,
-            totalPoint = changeTotalPoint,
-            remainPoint = point.remainPoint
+            expectPoint = point.expectPoint,
+            totalPoint = point.totalChangePoint,
+            remainPoint = point.remainPoint,
+            exchangePoint = exchange.filter { it?.status == ExchangeStatus.REQ }.sumOf{ it?.pointValue ?: 0 }
         )
 
         return MyCampaignResponseDTO(
@@ -751,7 +747,7 @@ class CampaignService constructor(
             throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST)
         }
 
-        return if ( enroll.enrollStatus == EnrollStatus.PROGRESS ) {
+        if ( enroll.enrollStatus == EnrollStatus.PROGRESS ) {
             enroll.orderNo = request.orderNo
             enroll.enrollStatus = EnrollStatus.REVIEW
             enroll.updateAt = LocalDateTime.now()
@@ -760,6 +756,27 @@ class CampaignService constructor(
         }else {
             throw CampaignException(CampaignError.CAMPAIGN_ORDER_NO)
         }
+    }
+
+    /**
+     * 캠페인 등록 정보 삭제
+     * @param request: DeleteCampaignEnrollRequestDTO
+     * @return Boolean 삭제여부
+     * @exception CampaignException
+     */
+    @Transactional
+    @Throws(CampaignException::class)
+    fun deleteCampaignEnroll( request: DeleteCampaignEnrollRequestDTO ): Boolean {
+        val enroll = campaignEnrollRepository.findById(request.campaignEnrollId)
+            .orElseThrow { throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST) }
+
+        if ( request.isForcedRevision || enroll.enrollStatus == EnrollStatus.APPLY && enroll.user?.id == request.userId) {
+            pointAttributeRepository.deleteByCampaignEnroll(enroll)
+            campaignEnrollRepository.delete(enroll)
+        }else {
+            throw CampaignException(CampaignError.CAMPAIGN_DO_NOT_CANCEL)
+        }
+        return true
     }
 
     /**

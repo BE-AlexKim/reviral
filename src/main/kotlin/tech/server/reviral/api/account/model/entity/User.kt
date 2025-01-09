@@ -35,7 +35,7 @@ class User(
 
     @Column(name = "login_pw")
     @Comment("비밀번호")
-    val loginPw: String,
+    var loginPw: String,
 
     @Column(name = "name")
     @Comment("이름")
@@ -48,23 +48,23 @@ class User(
 
     @Column(name = "phone_number")
     @Comment("휴대폰 번호")
-    val phone: String,
+    var phone: String,
 
     @Column(name = "address")
     @Comment("주소")
-    val address: String,
+    var address: String,
 
     @Column(name = "point_pw")
     @Comment("포인트 전환 비밀번호")
-    val pointPw: String? = null,
+    var pointPw: String? = null,
 
     @Column(name = "bank_code")
     @Comment("은행 코드")
-    val bankCode: String? = null,
+    var bankCode: String? = null,
 
     @Column(name = "account_number")
     @Comment("계좌 번호")
-    val account: String? = null,
+    var account: String? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role")
@@ -73,11 +73,11 @@ class User(
 
     @Column(name = "nv_id")
     @Comment("네이버 아이디")
-    val nvId: String? = null,
+    var nvId: String? = null,
 
     @Column(name = "cp_id")
     @Comment("쿠팡 아이디")
-    val cpId: String? = null,
+    var cpId: String? = null,
 
     @Column(name = "is_event")
     val isEvent: Boolean = false,

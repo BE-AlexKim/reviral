@@ -1,6 +1,7 @@
 package tech.server.reviral.common.config.docs.account
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.parameters.RequestBody
@@ -26,6 +27,9 @@ import java.lang.annotation.Inherited
 @Operation(
     summary = "사용자 이메일 인증코드 검증",
     description = "회원가입 시, 등록할 이메일을 통하여 인증코드 검증",
+    parameters = [
+        Parameter(name = "type", description = "signup(회원가입 인증),password(비밀번호인증),exchange(포인트 전환 비밀번호 인증)", required = false),
+    ],
     requestBody = RequestBody(
         description = "등록하고자 하는 이메일로 인증코드 발송",
         content = [

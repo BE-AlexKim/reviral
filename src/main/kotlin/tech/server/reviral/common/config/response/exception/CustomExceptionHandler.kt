@@ -90,4 +90,16 @@ class CustomExceptionHandler: ResponseEntityExceptionHandler() {
             )
     }
 
+    @ExceptionHandler(PointException::class)
+    fun handlerCampaignException(ex: PointException): ResponseEntity<ExceptionDTO> {
+        return ResponseEntity.status(ex.getErrorCode().getHttpStatus())
+            .body(
+                ExceptionDTO(
+                    status = ex.getErrorCode().getHttpStatus().value(),
+                    code = ex.getErrorCode().getCode(),
+                    message = ex.getErrorCode().getMessage()
+                )
+            )
+    }
+
 }

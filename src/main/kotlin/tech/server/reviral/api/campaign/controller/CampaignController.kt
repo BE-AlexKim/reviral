@@ -129,10 +129,22 @@ class CampaignController constructor(
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", review)
     }
 
+    /**
+     * 사용자 주문번호 등록 서비스
+     * @param request: EnrollProductOrderNoRequestDTO
+     * @return Boolean: 후기 작성 등록
+     */
     @PostMapping("/order")
     @UploadProductOrderNoExplain
     fun setOrderNo(@RequestBody request: EnrollProductOrderNoRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
         val isSave = campaignService.setProductOrderNo(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", isSave)
+    }
+
+    @DeleteMapping("/enroll")
+    @DeleteEnrollCampaignExplain
+    fun deleteCampaignEnroll(@RequestBody request: DeleteCampaignEnrollRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val delete = campaignService.deleteCampaignEnroll(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isDeleted", delete)
     }
 }

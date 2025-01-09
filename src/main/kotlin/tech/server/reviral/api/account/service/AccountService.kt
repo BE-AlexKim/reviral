@@ -1,5 +1,6 @@
 package tech.server.reviral.api.account.service
 
+import jakarta.persistence.Basic
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -10,7 +11,7 @@ import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.common.config.mail.EmailService
-import tech.server.reviral.common.config.mail.SetEmail
+import tech.server.reviral.common.config.mail.EmailTemplate
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.security.JwtRedisRepository
@@ -63,9 +64,9 @@ class AccountService constructor(
      */
     @Transactional
     @Throws(BasicException::class)
-    fun getUserInfo(username: String): UserInfoResponseDTO {
-        val user = accountRepository.findByLoginId(username)
-            ?: throw BasicException(BasicError.USER_NOT_EXIST)
+    fun getUserInfo(userId: Long): UserInfoResponseDTO {
+        val user = accountRepository.findById(userId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
         val phoneRegex = Regex("(\\d{3})(\\d{4})(\\d{4})")
 
@@ -74,10 +75,14 @@ class AccountService constructor(
             "${part1}-${part2}-${part3[0]}***"
         }
 
-        val accountNumber = user.account?.substring(0, user.account.lastIndex - 4)
+        val accountNumber = user.account?.substring(0, user.account?.lastIndex?.minus(4) ?: 0)
         accountNumber?.plus("*".repeat(5))
 
         return UserInfoResponseDTO(
+            name = user.name,
+            loginId = user.loginId,
+            nvId = user.nvId,
+            cpId = user.cpId,
             phoneNumber = phoneNumber,
             address = user.address,
             bankCode = user.bankCode,
@@ -111,11 +116,21 @@ class AccountService constructor(
      */
     @Transactional
     @Throws(RuntimeException::class)
-    fun sendAuthorizedToEmail( request: EmailAuthorizedRequestDTO ): Boolean {
-        val values = SetEmail.EMAIL_AUTHORIZED.values(request.email)
-        emailService.send(request.email, SetEmail.EMAIL_AUTHORIZED.getSubject(), SetEmail.EMAIL_AUTHORIZED.template(),values)
-        val code = values["code"]!!
-        jwtRedisRepository.setAuthorizationCode(request.email, code, 300000)
+    fun sendAuthorizedToEmail( type: String, request: EmailAuthorizedRequestDTO ): Boolean {
+
+        if ( EmailTemplate.values().none { it.name == type.uppercase() } ) {
+            throw BasicException(BasicError.UNSUPPORTED_URL)
+        }
+
+        val emailTemplate = EmailTemplate.valueOf(type.uppercase())
+
+        // 템플릿 Context 변수 설정
+        val values = emailTemplate.values(request.email)
+        // 이메일 전송
+        emailService.send(request.email, emailTemplate.getSubject(), emailTemplate.template(), values)
+        // Redis 저장
+        jwtRedisRepository.setAuthorizationCode("${emailTemplate.name}_${request.email}",  values["code"]!!, 300000)
+
         return true
     }
 
@@ -127,14 +142,21 @@ class AccountService constructor(
      */
     @Transactional
     @Throws(BasicException::class)
-    fun verifyAuthorizedEmailCode( request: AuthorizeCodeRequestDTO ): Boolean {
-        val code = jwtRedisRepository.getAuthorizationCode(request.email)
+    fun verifyAuthorizedEmailCode(type: String, request: AuthorizeCodeRequestDTO ): Boolean {
+
+        if ( EmailTemplate.values().none { it.name == type.uppercase() } ) {
+            throw BasicException(BasicError.UNSUPPORTED_URL)
+        }
+
+        val emailTemplate = EmailTemplate.valueOf(type.uppercase())
+
+        val code = jwtRedisRepository.getAuthorizationCode("${emailTemplate.name}_${request.email}")
             ?: throw BasicException(BasicError.AUTHORIZED_EMAIL)
 
         return if ( code != request.code ) {
             false
         }else {
-            jwtRedisRepository.deleteAuthorizationCode(request.email)
+            jwtRedisRepository.deleteAuthorizationCode("${emailTemplate.name}_${request.email}")
             true
         }
     }
@@ -177,6 +199,56 @@ class AccountService constructor(
         }else {
             throw BasicException(BasicError.USER_ALREADY_EXIST)
         }
+    }
+
+    /**
+     * 사용자 개인정보 업데이트 서비스
+     * @param request: UpdateUserInfoRequestDTO
+     * @return Boolean 업데이트 유무
+     * @exception BasicException
+     */
+    @Transactional
+    @Throws(BasicException::class)
+    fun updateUserInfo(request: UpdateUserInfoRequestDTO): Boolean {
+        val user = accountRepository.findById(request.userId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+        request.phoneNumber?.let { user.phone = it }
+        request.address?.let { user.address = it }
+        request.bankCode?.let { user.bankCode = it }
+        request.accountNumber?.let { user.account = it }
+        request.nvId?.let { user.nvId = it }
+        request.cpId?.let { user.cpId = it }
+        request.loginPw?.let { user.loginPw = passwordEncoder.encode(it) }
+        request.pointPw?.let { user.pointPw = passwordEncoder.encode(it) }
+
+        accountRepository.save(user)
+        return true
+    }
+
+    /**
+     * 비밀번호 검증 서비스
+     * @param request: ValidationPasswordRequestDTO
+     * @return 비밀번호 검증여부
+     * @exception BasicException
+     */
+    @Transactional
+    @Throws(BasicException::class)
+    fun isValidPassword(request: ValidationPasswordRequestDTO, type: String): Boolean {
+        val user = accountRepository.findById(request.userId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+        val password = when(type) {
+            "loginPw" -> {
+                user.loginPw
+            }
+            "pointPw" -> {
+                user.pointPw ?: throw BasicException(BasicError.POINT_PASSWORD_SET)
+            }
+            else -> throw BasicException(BasicError.UNSUPPORTED_URL)
+        }
+
+        return passwordEncoder.matches(request.password,password)
     }
 
     /**

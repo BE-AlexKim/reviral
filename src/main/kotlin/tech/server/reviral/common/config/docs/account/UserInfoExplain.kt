@@ -29,13 +29,13 @@ import java.lang.annotation.Inherited
     description = "사용자 개인정보 조회",
     parameters = [
         Parameter(
-            name = "username", description = "사용자 회원아이디", required = true,
+            name = "userId", description = "사용자 일련번호", required = true,
             examples = [
                 ExampleObject(
                     name = "예시 데이터",
                     description = "사용자 아이디를 PathVariable 형태로 넣어주세요.",
                     summary = "사용자 예시 데이터 ",
-                    value = "rpp0321"
+                    value = "1"
                 )
             ]
         )

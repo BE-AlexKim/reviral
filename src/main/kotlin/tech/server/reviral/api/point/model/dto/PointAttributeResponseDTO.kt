@@ -29,6 +29,8 @@ data class PointAttributeResponseDTO(
         val loginId: String? = null,
         @Schema(description = "적립 가능 포인트")
         val expectPoint: Int? = null,
+        @Schema(description = "전환대기중 포인트")
+        val exchangePoint: Int? = 0,
         @Schema(description = "총 전환 포인트")
         val totalPoint: Int? = null,
         @Schema(description = "포인트 잔액")

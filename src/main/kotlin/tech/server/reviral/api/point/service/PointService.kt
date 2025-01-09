@@ -60,15 +60,8 @@ class PointService constructor(
         val point = pointRepository.findByUser(user)
             ?: throw PointException(PointError.POINT_IS_NOT_EXIST)
 
-        // 기존 전환 신청 내역이 있는지 조회
-        val pointExchanges = pointExchangeRepository.findByUserAndStatus(user, ExchangeStatus.REQ)
-
-        // 기존 전환 신청 내역이 있을 경우,
-        val totalPoint = point.remainPoint + pointExchanges.filterNotNull()
-            .sumOf { it.pointValue }
-
         // 전환 가능한 포인트 내역을 초과했을 경우, 오류 발생
-        if ( totalPoint >= request.exchangeValue ) {
+        if ( point.remainPoint < request.exchangeValue ) {
             throw PointException(PointError.EXCHANGE_BETTER_THAN_REMAIN)
         }
 
@@ -77,9 +70,14 @@ class PointService constructor(
             user = user,
             status = ExchangeStatus.REQ,
             pointValue = request.exchangeValue,
-            exchangeDesc = ExchangeStatus.REQ.description(),
+            exchangeDesc = ExchangeStatus.REQ.description(request.exchangeValue),
             createAt = LocalDateTime.now()
         ))
+
+        point.remainPoint = point.remainPoint - request.exchangeValue
+        point.totalChangePoint = point.totalChangePoint + request.exchangeValue
+        point.updateAt = LocalDateTime.now()
+        this.pointRepository.save(point)
 
         return true
     }
@@ -100,15 +98,17 @@ class PointService constructor(
         val point = pointRepository.findByUser(user)
             ?: throw PointException(PointError.POINT_IS_NOT_EXIST)
 
+        val pointExchange = pointExchangeRepository.findByUserOrderByCreateAt(user)
+
         val userInfo = PointAttributeResponseDTO.UserInfo(
             name = user.name,
             loginId = user.loginId,
             expectPoint = point.expectPoint,
             totalPoint = point.totalChangePoint,
-            remainPoint = point.remainPoint
+            remainPoint = point.remainPoint,
+            exchangePoint = pointExchange?.filter { it.status == ExchangeStatus.REQ }?.sumOf { it.pointValue }
         )
 
-        val pointExchange = pointExchangeRepository.findByUserOrderByCreateAt(user)
         if ( pointExchange != null) {
             return PointAttributeResponseDTO(
                 user = userInfo,

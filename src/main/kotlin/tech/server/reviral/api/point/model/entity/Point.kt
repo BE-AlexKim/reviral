@@ -33,7 +33,7 @@ data class Point(
 
     @Column(name = "remain_point")
     @Comment("남은 포인트 잔액")
-    val remainPoint: Int = 0,
+    var remainPoint: Int = 0,
 
     @Column(name = "expect_point")
     @Comment("예상 적립포인트")
@@ -41,7 +41,7 @@ data class Point(
 
     @Column(name = "total_change_point")
     @Comment("총 전환 포인트 액수")
-    val totalChangePoint: Int = 0,
+    var totalChangePoint: Int = 0,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -49,7 +49,7 @@ data class Point(
 
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val updateAt: LocalDateTime? = null,
+    var updateAt: LocalDateTime? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

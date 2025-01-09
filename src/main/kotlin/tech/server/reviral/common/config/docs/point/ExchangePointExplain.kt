@@ -29,9 +29,7 @@ import java.lang.annotation.Inherited
     summary = "사용자 포인트 전환 요청",
     description = "포인트 전환을 신청합니다.",
     requestBody = RequestBody(
-        description = "사용자가 가진 포인트를 전환합니다.<br>" +
-                "캠페인이 완료되면 포인트가 지급되고 지급된 포인트를 전환 신청하여 포인트를 전환합니다.<br>" +
-                "아래는 사용자의 포인트를 관리자에게 전환 신청을 하는 API 입니다.",
+        description = "",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,

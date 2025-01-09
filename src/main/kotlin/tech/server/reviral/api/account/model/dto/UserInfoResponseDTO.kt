@@ -15,8 +15,16 @@ import io.swagger.v3.oas.annotations.media.Schema
  */
 @Schema(name = "사용자 개인정보 응답 모델")
 data class UserInfoResponseDTO(
+    @Schema(description = "사용자 이름")
+    val name: String,
+    @Schema(description = "사용자 로그인 아이디")
+    val loginId: String,
     @Schema(description = "휴대폰 번호")
     val phoneNumber: String,
+    @Schema(description = "네이버 아이디")
+    val nvId: String?,
+    @Schema(description = "쿠팡 아이디")
+    val cpId: String?,
     @Schema(description = "주소")
     val address: String,
     @Schema(description = "계좌은행")

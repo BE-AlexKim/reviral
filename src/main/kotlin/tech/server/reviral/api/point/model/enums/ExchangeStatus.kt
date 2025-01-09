@@ -18,5 +18,7 @@ enum class ExchangeStatus(private val desc: String) {
     REJECT("포인트 전환 거절"),
     FAIL("포인트 전환 실패");
 
-    fun description() = desc
+    fun description(point: Int): String {
+        return "$point $desc"
+    }
 }

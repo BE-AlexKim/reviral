@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import tech.server.reviral.api.account.model.entity.User
+import tech.server.reviral.api.campaign.model.entity.CampaignEnroll
 import tech.server.reviral.api.point.model.entity.PointAttribute
 import tech.server.reviral.api.point.model.enums.PointStatus
 
@@ -23,5 +24,9 @@ import tech.server.reviral.api.point.model.enums.PointStatus
 interface PointAttributeRepository: JpaRepository<PointAttribute, Long> {
 
     fun findByUser(user: User): PointAttribute
+
+    fun findByCampaignEnroll(enroll: CampaignEnroll): PointAttribute?
+
+    fun deleteByCampaignEnroll(campaignEnroll: CampaignEnroll)
 
 }

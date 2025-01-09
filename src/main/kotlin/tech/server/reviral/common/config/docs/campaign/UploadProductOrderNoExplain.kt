@@ -26,7 +26,7 @@ import java.lang.annotation.Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @Operation(
-    summary = "사용자 주문번호 등록 서비스",
+    summary = "사용자 주문번호 등록/변경 API",
     description = "회원가입 시, 사용자가 주문한 주문번호를 등록합니다.",
     requestBody = RequestBody(
         description = "주문번호 등록 서비스",

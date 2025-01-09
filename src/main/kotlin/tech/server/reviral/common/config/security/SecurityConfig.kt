@@ -63,8 +63,8 @@ class SecurityConfig(
 
             it.requestMatchers(
                 HttpMethod.POST,"/api/v1/campaign/save",
-                "/api/v1/users/email/verify",
-                "/api/v1/users/email/authorized"
+                "/api/v1/users/email/verify/{type}",
+                "/api/v1/users/email/authorized/{type}"
             ).permitAll()
 
             it.requestMatchers(

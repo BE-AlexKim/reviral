@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -69,25 +70,48 @@ class AccountController constructor(
         accountService.logout(userId)
     }
 
-    @PostMapping("/info/{username}")
+    @PostMapping("/info/{userId}")
     @UserInfoExplain
-    fun getUserInfo(@PathVariable username: String): ResponseEntity<WrapResponseEntity<UserInfoResponseDTO>> {
-        val userInfo = accountService.getUserInfo(username)
+    fun getUserInfo(@PathVariable userId: Long): ResponseEntity<WrapResponseEntity<UserInfoResponseDTO>> {
+        val userInfo = accountService.getUserInfo(userId)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "userInfo", userInfo)
     }
 
-    @PostMapping("/email/authorized")
+    @PostMapping("/email/authorized/{type}")
     @SendAuthorizedEmailExplain
-    fun sendAuthorizedCode(@RequestBody request: EmailAuthorizedRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val send = accountService.sendAuthorizedToEmail(request)
+    fun sendAuthorizedCode(
+        @PathVariable("type") type: String,
+        @RequestBody request: EmailAuthorizedRequestDTO
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val send = accountService.sendAuthorizedToEmail(type,request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSend", send)
     }
 
-    @PostMapping("/email/verify")
+    @PostMapping("/email/verify/{type}")
     @VerifyEmailAuthorizedCodeExplain
-    fun verifyAuthorizedCode( @RequestBody request: AuthorizeCodeRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val isVerifyCode = accountService.verifyAuthorizedEmailCode(request)
+    fun verifyAuthorizedCode(
+        @PathVariable("type") type:String,
+        @RequestBody request: AuthorizeCodeRequestDTO
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val isVerifyCode = accountService.verifyAuthorizedEmailCode(type,request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isVerify", isVerifyCode)
+    }
+
+    @PutMapping("/update")
+    @UpdateUserInfoExplain
+    fun updateUserInfo( @RequestBody request: UpdateUserInfoRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val update = accountService.updateUserInfo(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isUpdated", update)
+    }
+
+    @PostMapping("/verify/{type}")
+    @ValidationPasswordExplain
+    fun isValidationPassword(
+        @RequestBody request: ValidationPasswordRequestDTO,
+        @PathVariable("type") type: String
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val isValidation = accountService.isValidPassword(request, type)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"isValid", isValidation)
     }
 
 }
