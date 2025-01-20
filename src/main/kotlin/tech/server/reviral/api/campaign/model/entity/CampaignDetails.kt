@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.persistence.*
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
+import tech.server.reviral.api.campaign.model.enums.SellerStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -30,47 +31,26 @@ data class CampaignDetails(
     @JoinColumn(name = "campaign_id")
     val campaign: Campaign? = null,
 
-    @Column(name = "campaign_url")
-    var campaignUrl: String,
+    @Column(name = "campaign_date")
+    @Comment("진행날짜")
+    val applyDate: LocalDate,
 
-    @Column(name = "campaign_img_url")
-    var campaignImgUrl: String,
+    @Column(name = "campaigns_status")
+    @Enumerated(EnumType.STRING)
+    @Comment("캠페인 상태정보")
+    var sellerStatus: SellerStatus,
 
-    @Column(name = "campaign_price")
-    var campaignPrice: Int,
+    @Column(name = "join_count")
+    @Comment("캠페인 시작인원")
+    var joinCount: Long = 0,
 
-    @Column(name = "campaign_total_price")
-    val campaignTotalPrice: Int,
+    @Column(name = "sort_no")
+    @Comment("캠페인 순서번호")
+    val sortNo: Int = 0,
 
-    @Column(name = "daily_count")
-    val dailyRecruitCount: Long,
-
-    @Column(name = "start_time")
-    val startTime: String? = null,
-
-    @Column(name = "end_time")
-    val endTime: String? = null,
-
-    @Column(name = "total_count")
-    val totalCount: Int,
-
-    @Column(name = "option_count")
-    val optionCount: Int,
-
-    @Column(name = "review_point")
-    var reviewPoint: Int,
-
-    @Column(name = "active_date")
-    var activeDate: LocalDate,
-
-    @Column(name = "finish_date")
-    var finishDate: LocalDate,
-
-    @Column(name = "active_count")
-    val activeCount: Long,
-
-    @Column(name = "seller_request", columnDefinition = "TEXT")
-    val sellerRequest: String,
+    @Column(name = "recruit_count")
+    @Comment("모집인원")
+    val recruitCount: Long = 0,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -78,7 +58,10 @@ data class CampaignDetails(
 
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val updateAt: LocalDateTime? = null
+    var updateAt: LocalDateTime? = null,
+
+    @OneToMany(mappedBy = "campaignDetails", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var enroll: MutableList<CampaignEnroll> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -92,6 +75,6 @@ data class CampaignDetails(
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyCount = $dailyRecruitCount , startTime = $startTime , endTime = $endTime , totalCount = $totalCount , optionCount = $optionCount , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , activeCount = $activeCount , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
+        return this::class.simpleName + "(id = $id , applyDate = $applyDate , campaignsStatus = $sellerStatus , joinCount = $joinCount , sortNo = $sortNo , recruitCount = $recruitCount , createAt = $createAt , updateAt = $updateAt )"
     }
 }

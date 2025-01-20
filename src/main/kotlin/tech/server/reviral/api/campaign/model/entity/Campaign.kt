@@ -1,12 +1,13 @@
 package tech.server.reviral.api.campaign.model.entity
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.hibernate.Hibernate
+import org.hibernate.annotations.Comment
 import tech.server.reviral.api.campaign.model.enums.CampaignCategory
 import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
 import tech.server.reviral.api.campaign.model.enums.CampaignStatus
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
@@ -30,21 +31,91 @@ data class Campaign(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_platform")
+    @Comment("캠페인 플랫폼")
     val campaignPlatform: CampaignPlatform? = null,
 
     @Column(name = "campaign_title")
+    @Comment("캠페인 제목")
     var campaignTitle: String? = null,
+
+    @Column(name = "campaign_progress_price")
+    val campaignProgressPrice: Int? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_category")
+    @Comment("캠페인 카테고리")
     var campaignCategory: CampaignCategory? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_status")
+    @Comment("캠페인 상태")
     val campaignStatus: CampaignStatus? = null,
 
     @Column(name = "request_company")
+    @Comment("업체명")
     var companyName: String? = null,
+
+    @Column(name = "campaign_url")
+    @Comment("캠페인 링크")
+    var campaignUrl: String,
+
+    @Column(name = "campaign_img_url")
+    @Comment("캠페인 이미지 링크")
+    var campaignImgUrl: String,
+
+    @Column(name = "campaign_price")
+    @Comment("캠페인 가격")
+    var campaignPrice: Int,
+
+    @Column(name = "campaign_total_price")
+    @Comment("캠페인 총가격")
+    var campaignTotalPrice: Int,
+
+    @Column(name = "daily_recruit_count")
+    @Comment("일별 모집인원")
+    var dailyRecruitCount: Long,
+
+    @Column(name = "total_recruit_count")
+    @Comment("총 모집인원")
+    var totalRecruitCount: Int,
+
+    @Column(name = "option_count")
+    var optionCount: Int,
+
+    @Column(name = "start_time")
+    @Comment("시간구매 시작 시간")
+    var startTime: String? = null,
+
+    @Column(name = "end_time")
+    @Comment("시간구매 종료 시간")
+    var endTime: String? = null,
+
+    @Column(name = "review_point")
+    @Comment("리뷰 가격")
+    var reviewPoint: Int,
+
+    @Column(name = "active_date")
+    @Comment("활성화 시간")
+    var activeDate: LocalDate,
+
+    @Column(name = "finish_date")
+    @Comment("모집 마감 일시")
+    var finishDate: LocalDate,
+
+    @Column(name = "is_duplicated")
+    @Comment("중복 가능여부")
+    val isDuplicated: Boolean = false,
+
+    @Column(name = "duplicated_date")
+    val duplicatedDate: Long? = null,
+
+    @Column(name = "seller_request", columnDefinition = "TEXT")
+    @Comment("셀리 모집글")
+    var sellerRequest: String,
+
+    @Column(name = "seller_guide", columnDefinition = "TEXT")
+    @Comment("구매 가이드")
+    val sellerGuide: String? = null,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -54,6 +125,8 @@ data class Campaign(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     var updateAt: LocalDateTime? = null,
 
+
+    // 연관관계 정의
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var details: MutableList<CampaignDetails> = mutableListOf(),
 
@@ -64,7 +137,7 @@ data class Campaign(
     var subOptions: MutableList<CampaignSubOptions> = mutableListOf(),
 
 
-) {
+    ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
@@ -77,6 +150,6 @@ data class Campaign(
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , campaignPlatform = $campaignPlatform , campaignTitle = $campaignTitle , campaignCategory = $campaignCategory , campaignStatus = $campaignStatus , companyName = $companyName , createAt = $createAt , updateAt = $updateAt )"
+        return this::class.simpleName + "(id = $id , campaignPlatform = $campaignPlatform , campaignTitle = $campaignTitle , campaignCategory = $campaignCategory , campaignStatus = $campaignStatus , companyName = $companyName , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyRecruitCount = $dailyRecruitCount , totalCount = $totalRecruitCount , optionCount = $optionCount , startTime = $startTime , endTime = $endTime , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , isDuplicated = $isDuplicated , duplicatedDate = $duplicatedDate , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
     }
 }

@@ -48,6 +48,8 @@ enum class BasicError(
     FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "BE0018", BasicExceptionMessage.FILE_UPLOAD_FAIL),
     POINT_PASSWORD_SET(HttpStatus.BAD_REQUEST, "BE0019", BasicExceptionMessage.POINT_PASSWORD_SET),
 
+    AUTH_NOT_ADMIN(HttpStatus.BAD_REQUEST,"BE0020",BasicExceptionMessage.AUTH_NOT_ADMIN),
+
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "E00002", BasicExceptionMessage.UNAUTHORIZED);
 
     override fun getCode(): String {

@@ -26,10 +26,10 @@ import java.lang.annotation.Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @Operation(
-    summary = "사용자 주문번호 등록/변경 API",
-    description = "회원가입 시, 사용자가 주문한 주문번호를 등록합니다.",
+    summary = "사용자 주문번호 이미지 등록",
+    description = "회원가입 시, 사용자가 주문한 주문번호 이미지를 등록합니다.",
     requestBody = RequestBody(
-        description = "주문번호 등록 서비스",
+        description = "주문번호 이미지 등록 서비스",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -41,7 +41,7 @@ import java.lang.annotation.Inherited
                                 {
                                   "userId" : 1,
                                   "campaignEnrollId": 1,
-                                  "orderNo": "203029841828332"
+                                  "orderImage": "203029841828332"
                                 }
                         """
                     )

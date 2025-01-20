@@ -3,6 +3,8 @@ package tech.server.reviral.api.campaign.model.dto
 import io.swagger.v3.oas.annotations.media.Schema
 import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
 import tech.server.reviral.api.campaign.model.enums.CampaignStatus
+import tech.server.reviral.api.campaign.model.enums.SellerStatus
+import java.time.LocalDate
 
 /**
  *packageName    : tech.server.reviral.api.campaign.model.dto
@@ -18,7 +20,7 @@ import tech.server.reviral.api.campaign.model.enums.CampaignStatus
 @Schema(name = "캠페인 카드 응답 모델")
 data class CampaignCardResponseDTO(
     @Schema(description = "캠페인 일련번호")
-    val campaignId: Long? = null,
+    val campaignDetailsId: Long? = null,
     @Schema(description = "캠페인 타이틀")
     val campaignTitle: String? = null,
     @Schema(description = "캠페인 상태값")
@@ -32,9 +34,13 @@ data class CampaignCardResponseDTO(
     @Schema(description = "캠페인 상품가격")
     val campaignPrice: Int = 0,
     @Schema(description = "캠페인 포인트")
-    val campaignPoint: Int = 0 ,
+    val campaignPoint: Int = 0,
     @Schema(description = "캠페인 모집인원")
-    val totalCount: Int = 0 ,
+    val totalCount: Long = 0,
     @Schema(description = "캠페인 참여인원")
     val joinCount: Long = 0,
+    @Schema(description = "오픈 날짜")
+    val applyDate: LocalDate? = null,
+    @Schema(description = "캠페인 상세 상태")
+    val sellerStatus: SellerStatus? = null
 )

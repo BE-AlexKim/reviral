@@ -53,7 +53,7 @@ data class MyCampaignResponseDTO(
     @Schema(name = "캠페인 목록")
     data class MyCampaigns(
         @Schema(description = "캠페인 일련번호")
-        val campaignId: Long?,
+        val campaignEnrollId: Long?,
         @Schema(description = "캠페인 진행상태")
         val campaignStatus: EnrollStatus?,
         @Schema(description = "캠페인 신청 일자")
@@ -64,6 +64,12 @@ data class MyCampaignResponseDTO(
         @Schema(description = "캠페인 링크")
         val campaignLink: String?,
         @Schema(description = "캠페인 제목")
-        val campaignTitle: String?
+        val campaignTitle: String?,
+        @Schema(description = "캠페인 셀러 요청사항")
+        val sellerGuide: String?,
+        @Schema(description = "주문번호 이미지 검수상태")
+        val orderStatus: Boolean? = null,
+        @Schema(description = "후기 이미지 검수상태")
+        val reviewStatus: Boolean? = null
     )
 }

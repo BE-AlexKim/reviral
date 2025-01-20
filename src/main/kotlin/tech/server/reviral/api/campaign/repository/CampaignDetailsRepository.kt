@@ -2,6 +2,7 @@ package tech.server.reviral.api.campaign.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import tech.server.reviral.api.campaign.model.entity.Campaign
 import tech.server.reviral.api.campaign.model.entity.CampaignDetails
 
 /**
@@ -17,4 +18,7 @@ import tech.server.reviral.api.campaign.model.entity.CampaignDetails
  */
 @Repository
 interface CampaignDetailsRepository: JpaRepository<CampaignDetails, Long> {
+
+    fun findByCampaignAndSortNo(campaign: Campaign, sortNo: Int): CampaignDetails?
+
 }

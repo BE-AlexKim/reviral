@@ -18,7 +18,5 @@ data class EnrollProductOrderNoRequestDTO(
     @Schema(description = "사용자 일련번호")
     val userId: Long,
     @Schema(description = "캠페인 등록 일련번호")
-    val campaignEnrollId: Long,
-    @Schema(description = "상품 주문번호")
-    val orderNo: String
+    val campaignEnrollId: Long
 )

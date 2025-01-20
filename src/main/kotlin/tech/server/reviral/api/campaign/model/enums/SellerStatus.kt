@@ -2,22 +2,18 @@ package tech.server.reviral.api.campaign.model.enums
 
 /**
  *packageName    : tech.server.reviral.api.campaign.model.enums
- * fileName       : EnrollStatus
+ * fileName       : SellerStatus
  * author         : joy58
- * date           : 2024-12-11
+ * date           : 2025-01-13
  * description    :
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2024-12-11        joy58       최초 생성
+ * 2025-01-13        joy58       최초 생성
  */
-enum class EnrollStatus(private val desc: String) {
-    APPLY("참여 진행중"),
-    PROGRESS("진행"),
-    REVIEW("후기 작성"),
-    INSPECT("검수"),
-    MODIFY("수정 요청"),
-    CANCEL("취소"),
+enum class SellerStatus(private val desc: String) {
+    ACTIVE("활성화"),
+    WAIT("대기중"),
     COMPLETE("완료");
 
     fun description() = desc

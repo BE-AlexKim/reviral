@@ -1,6 +1,5 @@
 package tech.server.reviral.api.account.service
 
-import jakarta.persistence.Basic
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -8,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.account.model.dto.*
 import tech.server.reviral.api.account.model.entity.User
+import tech.server.reviral.api.account.model.enums.BankCode
 import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.common.config.mail.EmailService
@@ -59,8 +59,9 @@ class AccountService constructor(
 
     /**
      * 사용자 설정 정보 조회
-     * @param username: String
+     * @param userId: String
      * @return UserInfoResponseDTO
+     * @exception BasicException
      */
     @Transactional
     @Throws(BasicException::class)
@@ -78,6 +79,8 @@ class AccountService constructor(
         val accountNumber = user.account?.substring(0, user.account?.lastIndex?.minus(4) ?: 0)
         accountNumber?.plus("*".repeat(5))
 
+        val bankName = BankCode.values().first { it.getBankCode() == user.bankCode }.getBankName()
+
         return UserInfoResponseDTO(
             name = user.name,
             loginId = user.loginId,
@@ -85,7 +88,7 @@ class AccountService constructor(
             cpId = user.cpId,
             phoneNumber = phoneNumber,
             address = user.address,
-            bankCode = user.bankCode,
+            bankCode = bankName,
             accountNumber = accountNumber
         )
     }
@@ -104,6 +107,23 @@ class AccountService constructor(
         val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
         // 인증 객체에서 사용자 정보 객체로 변환
         val user = authentication.principal as User
+        // 사용자 정보 객체로 변환 후, 토큰 생성
+        return jwtTokenProvider.getJwtToken(user)
+    }
+
+    @Transactional
+    @Throws(BasicException::class)
+    fun signInToAdmin(request: SignInRequestDTO): JwtToken {
+        // UsernamePasswordAuthenticationToken 발급
+        val authenticationToken = UsernamePasswordAuthenticationToken(request.loginId, request.password )
+        // 인증 객체 생성
+        val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
+        // 인증 객체에서 사용자 정보 객체로 변환
+        val user = authentication.principal as User
+
+        if ( user.auth != UserRole.ROLE_ADMIN ) {
+            throw BasicException(BasicError.AUTH_NOT_ADMIN)
+        }
         // 사용자 정보 객체로 변환 후, 토큰 생성
         return jwtTokenProvider.getJwtToken(user)
     }
@@ -238,17 +258,18 @@ class AccountService constructor(
         val user = accountRepository.findById(request.userId)
             .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
-        val password = when(type) {
-            "loginPw" -> {
-                user.loginPw
+        return when(type) {
+            "login" -> {
+                passwordEncoder.matches(request.password, user.password)
             }
-            "pointPw" -> {
-                user.pointPw ?: throw BasicException(BasicError.POINT_PASSWORD_SET)
+            "point" -> {
+                val pointPw = user.pointPw
+                    ?: throw BasicException(BasicError.POINT_PASSWORD_SET)
+
+                passwordEncoder.matches(request.password, pointPw)
             }
             else -> throw BasicException(BasicError.UNSUPPORTED_URL)
         }
-
-        return passwordEncoder.matches(request.password,password)
     }
 
     /**

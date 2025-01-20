@@ -38,9 +38,15 @@ class AccountController constructor(
 
     @PostMapping("/sign-in")
     @SignInExplain
-    fun login( @RequestBody request: SignInRequestDTO ): ResponseEntity<WrapResponseEntity<JwtToken>> {
+    fun signIn( @RequestBody request: SignInRequestDTO ): ResponseEntity<WrapResponseEntity<JwtToken>> {
         val token = accountService.signIn(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.ACCEPTED, "jwt", token)
+    }
+
+    @PostMapping("/admin/sign-in")
+    fun login(@RequestBody request: SignInRequestDTO): ResponseEntity<WrapResponseEntity<JwtToken>> {
+        val login = accountService.signInToAdmin(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"jwt", login)
     }
 
     @PostMapping("/sign-up")

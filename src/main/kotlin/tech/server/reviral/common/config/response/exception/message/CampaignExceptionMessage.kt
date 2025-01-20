@@ -12,6 +12,12 @@ package tech.server.reviral.common.config.response.exception.message
  * 2024-12-03        joy58       최초 생성
  */
 object CampaignExceptionMessage {
+    const val CAMPAIGN_CP_ID_NULL = "쿠팡 아이디를 등록해주세요."
+    const val CAMPAIGN_NV_ID_NULL = "네이버 아이디를 등록해주세요."
+    const val CAMPAIGN_CANCEL_JOIN = "캠페인을 취소한 당일날은 신청이 불가능합니다."
+    const val CAMPAIGN_IS_NOT_DUPLICATED = "해당 캠페인은 중복으로 진행이 불가능합니다."
+    const val CAMPAIGN_START_NOT_YET = "해당 캠페인은 아직 다시할 수 없습니다."
+    const val CAMPAIGN_FULL_RECRUIT = "해당 캠페인 모집인원이 마감되었습니다."
     const val CAMPAIGN_DO_NOT_CANCEL = "해당 캠페인을 취소할 수 없습니다."
     const val CAMPAIGN_REVIEW = "해당 캠페인의 리뷰를 이미 작성했거나, 작성할 수 없습니다."
     const val CAMPAIGN_ORDER_NO = "상품 주문번호를 이미 작성했거나, 작성할 수 없습니다."

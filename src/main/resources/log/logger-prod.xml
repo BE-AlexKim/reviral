@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %green(%d{yyyy-MM-dd HH:mm:ss.SSS}) %magenta([%thread]) %highlight(%5level) %cyan(%logger) - %msg%n
+            </Pattern>
+        </layout>
+    </appender>
+
+    <logger name="tech.server.reviral.api" level="debug"/>
+    <logger name="tech.server.reviral.common" level="debug"/>
+    <logger name="jdbc.sqlonly" level="debug"/>
+    <logger name="org.springframework.boot.autoconfigure.logging" level="warn"/>
+    <logger name="org.hibernate.sql" level="DEBUG"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+    <logger name="org.hibernate.transaction.JDBCTransaction" level="DEBUG"/>
+    <logger name="org.hibernate.jdbc.ConnectionManager" level="DEBUG"/>
+    <logger name="org.springframework.orm.jpa.JpaTransactionManager" level="DEBUG"/>
+
+    <root level="info">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>

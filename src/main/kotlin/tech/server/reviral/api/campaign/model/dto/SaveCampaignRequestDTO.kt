@@ -49,6 +49,9 @@ data class SaveCampaignRequestDTO(
     @Schema(description = "리뷰어 지급 포인트", example = "500", required = true)
     val reviewPoint: Int,
 
+    @Schema(description = "캠페인 진행비용", example = "3000", required = true)
+    val progressPrice: Int,
+
     @Schema(description = "판매 시작 날짜", example = "2024.12.31", required = true)
     val startSaleDateTime: LocalDate,
 
@@ -61,8 +64,11 @@ data class SaveCampaignRequestDTO(
     @Schema(description = "상품 옵션", required = false)
     val options: MutableList<Options>,
 
-    @Schema(description = "요청사항", required = true)
-    val sellerRequest: String
+    @Schema(description = "셀러 모집글", required = true)
+    val sellerRequest: String,
+
+    @Schema(description = "셀러 구매가이드", required = true)
+    val sellerGuide: String
 
 ) {
     @Schema(name = "상품 옵션")

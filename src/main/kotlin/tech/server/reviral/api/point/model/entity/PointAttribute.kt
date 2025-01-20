@@ -38,7 +38,7 @@ data class PointAttribute(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "point_status")
-    val status: PointStatus,
+    var status: PointStatus,
 
     @Column(name = "point_value")
     val point: Int = 0,
@@ -49,7 +49,7 @@ data class PointAttribute(
 
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val updateAt: LocalDateTime? = null,
+    var updateAt: LocalDateTime? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

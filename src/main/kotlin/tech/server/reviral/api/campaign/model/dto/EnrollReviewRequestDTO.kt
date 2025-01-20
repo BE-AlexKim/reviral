@@ -1,6 +1,7 @@
 package tech.server.reviral.api.campaign.model.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import org.springframework.web.multipart.MultipartFile
 
 /**
  *packageName    : tech.server.reviral.api.campaign.model.dto
@@ -19,4 +20,6 @@ data class EnrollReviewRequestDTO(
     val userId: Long,
     @Schema(description = "캠페인 등록 일련번호")
     val campaignEnrollId: Long,
+//    @Schema(description = "이미지 파일")
+//    val image: MultipartFile
 )

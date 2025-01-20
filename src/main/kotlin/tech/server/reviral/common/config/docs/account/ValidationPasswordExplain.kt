@@ -41,7 +41,7 @@ import java.lang.annotation.Inherited
                         value = """
                                 {
                                   "userId": 1,
-                                  "loginPw": "비밀번호"
+                                  "password": "비밀번호"
                                 }
                         """
                     )

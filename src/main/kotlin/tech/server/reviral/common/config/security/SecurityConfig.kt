@@ -58,34 +58,30 @@ class SecurityConfig(
             it.requestMatchers(
                 HttpMethod.GET,
                 "/api/v1/campaign",
-                "/api/v1/campaign/{campaignId}"
+                "/api/v1/campaign/{campaignDetailsId}",
+                "/api/v1/users/id-check",
             ).permitAll()
 
             it.requestMatchers(
                 HttpMethod.POST,"/api/v1/campaign/save",
                 "/api/v1/users/email/verify/{type}",
-                "/api/v1/users/email/authorized/{type}"
+                "/api/v1/users/email/authorized/{type}",
+                "/api/v1/users/admin/sign-in",
+                "/api/v1/users/sign-in",
+                "/api/v1/users/sign-up",
+                "/api/v1/users/reload"
             ).permitAll()
 
             it.requestMatchers(
                 HttpMethod.PUT, "/api/v1/campaign/{campaignId}"
             ).permitAll()
 
-//            it.requestMatchers(
-//                HttpMethod.POST,"/api/v1/campaign/save"
-//            ).hasAuthority("ROLE_ADMIN")
-//            it.requestMatchers(
-//                HttpMethod.PUT,
-//                "/api/v1/campaign/{campaignId}"
-//            ).hasAuthority("ROLE_ADMIN")
-
-            // User URL Permit
             it.requestMatchers(
-                "/api/v1/users/sign-in",
-                "/api/v1/users/sign-up",
-                "/api/v1/users/id-check",
-                "/api/v1/users/reload"
-            ).permitAll()
+                HttpMethod.POST,
+                "/api/v1/campaign/admin/list/{campaignId}",
+                "/api/v1/campaign/admin/list",
+            ).hasAuthority("ROLE_ADMIN")
+
             // Resource Permit
             it.requestMatchers(
                 "/configuration/**",

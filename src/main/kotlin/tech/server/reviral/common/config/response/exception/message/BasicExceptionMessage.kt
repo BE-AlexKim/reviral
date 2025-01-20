@@ -35,5 +35,6 @@ object BasicExceptionMessage {
     const val FILE_IMG_EXTENSION = "지원하지 않는 확장자입니다."
     const val FILE_UPLOAD_FAIL = "파일 업로드에 실패하였습니다."
     const val POINT_PASSWORD_SET = "포인트 비밀번호를 설정해주세요."
+    const val AUTH_NOT_ADMIN = "관리자 계정 권한이 없습니다."
 
 }

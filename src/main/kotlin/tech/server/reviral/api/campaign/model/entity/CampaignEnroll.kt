@@ -39,6 +39,11 @@ data class CampaignEnroll(
     val campaign: Campaign? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "campaign_details_id")
+    @Comment("캠페인 상세 일련번호")
+    val campaignDetails: CampaignDetails,
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "campaign_options_id")
     @Comment("캠페인 옵션 일련번호")
     val options: CampaignOptions? = null,
@@ -50,19 +55,32 @@ data class CampaignEnroll(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "enroll_status")
+    @Comment("등록 상태값")
     var enrollStatus: EnrollStatus? = null,
 
     @Column(name = "enroll_date")
     @Comment("참여 일자")
     val enrollDate: LocalDate = LocalDate.now(),
 
-    @Column(name = "order_number")
+    @Column(name = "order_img_url")
     @Comment("상품 주문번호")
-    var orderNo: String? = null,
+    var orderImageUrl: String? = null,
+
+    @Column(name = "is_inspect_order")
+    @Comment("상품 주문번호 검수상태")
+    var inspectOrderYn: Boolean? = null,
 
     @Column(name = "review_img_url")
-    @Comment("리뷰 캡처 이미지 링크")
+    @Comment("후기 이미지 링크")
     var reviewImgUrl: String? = null,
+
+    @Column(name = "is_inspect_review")
+    @Comment("후기 이미지 검수상태")
+    var inspectReviewYn: Boolean? = null,
+
+    @Column(name = "is_cancel")
+    @Comment("캠페인 취소여부")
+    var cancelYn: Boolean,
 
     @Column(name = "create_at")
     @Comment("최초 생성 일시")

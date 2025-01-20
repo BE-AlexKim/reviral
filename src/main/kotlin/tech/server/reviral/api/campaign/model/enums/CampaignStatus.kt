@@ -15,5 +15,5 @@ import com.fasterxml.jackson.annotation.JsonFormat
  */
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 enum class CampaignStatus(private val desc: String) {
-    WAIT("대기중"),RECRUITMENT("모집중"),PROGRESS("진행중"),FINISH("마감");
+    WAIT("입금대기"),PROGRESS("진행중"),FINISH("마감");
 }

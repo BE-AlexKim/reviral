@@ -1,10 +1,8 @@
 package tech.server.reviral.common.config.response.exception.enums
 
 import org.springframework.http.HttpStatus
-import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.CampaignException
 import tech.server.reviral.common.config.response.exception.ExceptionMessageInitializer
-import tech.server.reviral.common.config.response.exception.message.BasicExceptionMessage
 import tech.server.reviral.common.config.response.exception.message.CampaignExceptionMessage
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -25,6 +23,12 @@ enum class CampaignError(
     private val code: String,
     private val message: String
 ): ExceptionMessageInitializer {
+    CAMPAIGN_CP_ID_NULL(HttpStatus.BAD_REQUEST,"CP0017", CampaignExceptionMessage.CAMPAIGN_CP_ID_NULL),
+    CAMPAIGN_NV_ID_NULL(HttpStatus.BAD_REQUEST, "CP0016", CampaignExceptionMessage.CAMPAIGN_NV_ID_NULL),
+    CAMPAIGN_CANCEL_JOIN(HttpStatus.BAD_REQUEST,"CP0015", CampaignExceptionMessage.CAMPAIGN_CANCEL_JOIN),
+    CAMPAIGN_IS_NOT_DUPLICATED(HttpStatus.BAD_REQUEST,"CP0014", CampaignExceptionMessage.CAMPAIGN_IS_NOT_DUPLICATED),
+    CAMPAIGN_START_NOT_YET(HttpStatus.BAD_REQUEST,"CP0013",CampaignExceptionMessage.CAMPAIGN_START_NOT_YET),
+    CAMPAIGN_FULL_RECRUIT(HttpStatus.BAD_REQUEST, "CP0012", CampaignExceptionMessage.CAMPAIGN_FULL_RECRUIT),
     CAMPAIGN_DO_NOT_CANCEL(HttpStatus.BAD_REQUEST, "CP0011", CampaignExceptionMessage.CAMPAIGN_DO_NOT_CANCEL),
     CAMPAIGN_REVIEW(HttpStatus.BAD_REQUEST, "CP0010", CampaignExceptionMessage.CAMPAIGN_REVIEW),
     CAMPAIGN_ORDER_NO(HttpStatus.BAD_REQUEST, "CP0009", CampaignExceptionMessage.CAMPAIGN_ORDER_NO),

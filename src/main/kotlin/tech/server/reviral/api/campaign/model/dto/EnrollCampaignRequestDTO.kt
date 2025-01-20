@@ -18,7 +18,7 @@ data class EnrollCampaignRequestDTO(
     @Schema(description = "사용자 일련번호")
     val userId: Long,
     @Schema(description = "캠페인 일련번호")
-    val campaignId: Long,
+    val campaignDetailsId: Long,
     @Schema(description = "캠페인 캠페인 옵션 일련번호")
     val campaignOptionId: Long,
     @Schema(description = "캠페인 캠페인 서브옵션 이련번호")

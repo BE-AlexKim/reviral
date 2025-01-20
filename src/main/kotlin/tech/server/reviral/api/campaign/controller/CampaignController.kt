@@ -3,6 +3,7 @@ package tech.server.reviral.api.campaign.controller
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -40,24 +41,22 @@ class CampaignController constructor(
     @GetMapping
     @SearchCampaignExplain
     fun getCampaigns(
-        @RequestParam category: String?,
-        @RequestParam platform: String?,
         @RequestParam status: String?,
         pageable: Pageable,
     ):ResponseEntity<WrapResponseEntity<List<CampaignCardResponseDTO>>> {
-        val search = campaignService.searchCampaigns(category, platform, status,pageable)
+        val search = campaignService.searchCampaigns(status,pageable)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "campaigns", search)
     }
 
     /**
      * 캠페인 정보 단건 조회
-     * @param campaignId: Long
+     * @param campaignDetailsId: Long
      * @return CampaignDetailResponseDTO
      */
-    @GetMapping("/{campaignId}")
+    @GetMapping("/{campaignDetailsId}")
     @SearchCampaignDetailsExplain
-    fun getCampaign(@PathVariable campaignId: Long): ResponseEntity<WrapResponseEntity<CampaignDetailResponseDTO>> {
-        val campaign = campaignService.getCampaign(campaignId)
+    fun getCampaign(@PathVariable campaignDetailsId: Long): ResponseEntity<WrapResponseEntity<CampaignDetailResponseDTO>> {
+        val campaign = campaignService.getCampaign(campaignDetailsId)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "campaign", campaign)
     }
 
@@ -103,7 +102,7 @@ class CampaignController constructor(
 
     /**
      * 사용자 마이캠페인 정보 조회
-     * @param loginId: String
+     * @param userId: Long
      * @return ResponseEntity<WrapResponseEntity<Boolean>>
      */
     @GetMapping("/users/{userId}")
@@ -119,13 +118,13 @@ class CampaignController constructor(
      * @param request: EnrollReviewRequestDTO
      * @return Boolean: S3저장 성공 여부
      */
-    @PostMapping(value = ["/review"], consumes = ["multipart/form-data"] )
+    @PostMapping(value = ["/review"], consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @UploadReviewExplain
     fun setReview(
         @RequestPart("image") image: MultipartFile,
-        @RequestPart("request") request: EnrollReviewRequestDTO
+        @ModelAttribute request: EnrollReviewRequestDTO
     ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val review = campaignService.setReviewImage(image, request)
+        val review = campaignService.setReviewImage(request, image)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", review)
     }
 
@@ -134,13 +133,21 @@ class CampaignController constructor(
      * @param request: EnrollProductOrderNoRequestDTO
      * @return Boolean: 후기 작성 등록
      */
-    @PostMapping("/order")
+    @PostMapping("/order", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @UploadProductOrderNoExplain
-    fun setOrderNo(@RequestBody request: EnrollProductOrderNoRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val isSave = campaignService.setProductOrderNo(request)
+    fun setProductOrderImageUrl(
+        @RequestPart("image") image: MultipartFile,
+        @ModelAttribute request: EnrollReviewRequestDTO
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val isSave = campaignService.setProductOrderImageUrl(request, image)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", isSave)
     }
 
+    /**
+     * 캠페인 등록 취소
+     * @param request: DeleteCampaignEnrollRequestDTO
+     * @return Boolean: 삭제여부
+     */
     @DeleteMapping("/enroll")
     @DeleteEnrollCampaignExplain
     fun deleteCampaignEnroll(@RequestBody request: DeleteCampaignEnrollRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {

@@ -18,7 +18,7 @@ import java.lang.annotation.Inherited
     summary = "캠페인 상세 목록 조회",
     description = "캠페인의 상세정보를 조회합니다.",
     parameters = [
-        Parameter(name = "campaignId", description = "캠페인 고유일련번호", required = true)
+        Parameter(name = "campaignDetailsId", description = "캠페인 상세정보 고유일련번호", required = true)
     ]
 )
 @ApiResponses(
