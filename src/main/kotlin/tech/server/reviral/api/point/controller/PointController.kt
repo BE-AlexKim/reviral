@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import tech.server.reviral.api.point.model.dto.ExchangePointRequestDTO
 import tech.server.reviral.api.point.model.dto.PointAttributeResponseDTO
+import tech.server.reviral.api.point.model.dto.PointExchangeResponseDTO
 import tech.server.reviral.api.point.service.PointService
 import tech.server.reviral.common.config.docs.point.ExchangePointExplain
 import tech.server.reviral.common.config.docs.point.PointAttributeExplain
@@ -41,4 +42,5 @@ class PointController constructor(
         val pointAttribute = pointService.getPointAttributes(userId)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"pointAttributes", pointAttribute)
     }
+
 }

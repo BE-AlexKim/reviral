@@ -27,23 +27,23 @@ data class CampaignSubOptions(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "campaign_options_id")
-    val campaignOptions: CampaignOptions? = null,
+    var campaignOptions: CampaignOptions? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "campaign_id")
     val campaign: Campaign? = null,
 
     @Column(name = "option_title")
-    val title: String? = null,
+    var title: String? = null,
 
     @Column(name = "option_count")
-    val recruitPeople: Int? = null,
+    var recruitPeople: Int? = null,
 
     @Column(name = "add_price")
-    val addPrice: Int? = null,
+    var addPrice: Int? = null,
 
     @Column(name = "option_order")
-    val order: Int? = null,
+    var order: Int? = null,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -51,7 +51,7 @@ data class CampaignSubOptions(
 
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val updateAt: LocalDateTime? = null
+    var updateAt: LocalDateTime? = null
 
 ) {
     override fun equals(other: Any?): Boolean {

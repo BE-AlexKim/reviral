@@ -40,7 +40,6 @@ class JwtTokenProvider(
     @Value("\${spring.jwt.expiration.refresh-time}")
     private var refreshExpiredTime: Long,
 
-    private val customUserDetailsService: CustomUserDetailsService,
     private val jwtRedisRepository: JwtRedisRepository
 ) {
 
@@ -63,8 +62,9 @@ class JwtTokenProvider(
             .setSubject(userId)
             .setIssuer("RE:VIRAL.CO")
             .setIssuedAt(issuedAt)
-            .claim("username",user.loginId)
+            .claim("username",user.email)
             .claim("roles",user.auth)
+            .claim("hasUserInfo", user.userInfo != null)
             .setExpiration(accessTokenExpiredDate)
             .signWith(key, algorithm)
             .compact()
@@ -74,7 +74,7 @@ class JwtTokenProvider(
             .setSubject(userId)
             .setIssuer("Reviral")
             .setIssuedAt(issuedAt)
-            .claim("username", user.loginId)
+            .claim("username", user.email)
             .setExpiration(refreshTokenExpiredDate)
             .signWith(key, algorithm)
             .compact()
@@ -83,7 +83,8 @@ class JwtTokenProvider(
 
         return JwtToken(
             accessToken = accessToken,
-            refreshToken = refreshToken
+            refreshToken = refreshToken,
+            userId = user.id
         )
     }
 

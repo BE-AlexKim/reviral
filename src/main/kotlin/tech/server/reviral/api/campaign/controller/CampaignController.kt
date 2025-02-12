@@ -61,18 +61,6 @@ class CampaignController constructor(
     }
 
     /**
-     * 캠페인 정보 저장
-     * @param request: SaveCampaignRequestDTO
-     * @return Boolean
-     */
-    @PostMapping("/save")
-    @SaveCampaignExplain
-    fun save(@RequestBody request: SaveCampaignRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val save = campaignService.setCampaign(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", save)
-    }
-
-    /**
      * 캠페인 참여 정보 등록
      * @param request: EnrollCampaignRequestDTO
      * @return Boolean
@@ -82,22 +70,6 @@ class CampaignController constructor(
     fun enroll(@RequestBody request: EnrollCampaignRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
         val enroll = campaignService.enrollCampaign(request)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", enroll)
-    }
-
-    /**
-     * 캠페인 정보 단건 수정
-     * @param campaignId: Long
-     * @param request: UpdateCampaignRequestDTO
-     * @return Boolean
-     */
-    @PutMapping("/{campaignId}")
-    @UpdateCampaignExplain
-    fun updateCampaign(
-        @PathVariable campaignId: Long,
-        @RequestBody request: UpdateCampaignRequestDTO
-    ):ResponseEntity<WrapResponseEntity<Boolean>> {
-        val update = campaignService.updateCampaign(campaignId, request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isUpdated", update)
     }
 
     /**
@@ -139,7 +111,7 @@ class CampaignController constructor(
         @RequestPart("image") image: MultipartFile,
         @ModelAttribute request: EnrollReviewRequestDTO
     ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val isSave = campaignService.setProductOrderImageUrl(request, image)
+        val isSave = campaignService.setOrderImage(request, image)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", isSave)
     }
 

@@ -31,7 +31,6 @@ import tech.server.reviral.common.config.response.exception.enums.CampaignError
 import tech.server.reviral.common.config.response.exception.enums.PointError
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 /**
  *packageName    : tech.server.reviral.api.campaign.service
@@ -46,7 +45,6 @@ import java.time.temporal.ChronoUnit
  */
 @Service
 class CampaignService constructor(
-    private val campaignRepository: CampaignRepository,
     private val campaignDetailsRepository: CampaignDetailsRepository,
     private val campaignOptionsRepository: CampaignOptionsRepository,
     private val campaignSubOptionsRepository: CampaignSubOptionsRepository,
@@ -62,8 +60,6 @@ class CampaignService constructor(
 
     /**
      * 캠페인 정보 다중 조회
-     * @param category: String?
-     * @param platform: String?
      * @param status: String?
      * @param pageable: Pageable
      * @return List<CampaignCardResponseDTO>
@@ -100,6 +96,8 @@ class CampaignService constructor(
             .from(qCampaign)
             .join(qCampaignDetails).on(
                 qCampaignDetails.campaign.id.eq(qCampaign.id)
+            ).where(
+                qCampaignDetails.isDelete.eq(false)
             )
 
         val booleanBuilder = BooleanBuilder()
@@ -130,7 +128,7 @@ class CampaignService constructor(
                 }
                 "best" -> {
                     booleanBuilder.and(
-                        qCampaignDetails.applyDate.eq(now)
+                        qCampaignDetails.sellerStatus.eq(SellerStatus.ACTIVE)
                     )
 
                     return query
@@ -143,19 +141,36 @@ class CampaignService constructor(
             }
         }else { // 이런 캠페인을 찾으셨나요
             booleanBuilder.and(
-                qCampaignDetails.applyDate.eq(now)
-                    .and(qCampaignDetails.sellerStatus.eq(SellerStatus.ACTIVE))
+                qCampaignDetails.sellerStatus.eq(SellerStatus.ACTIVE)
+                    .and(qCampaignDetails.isDelete.eq(false))
+                    .and(
+                        qCampaignDetails.applyDate.between(now.minusDays(1),now.plusDays(1))
+                    )
             ).or(
-                qCampaignDetails.applyDate.eq(now.plusDays(1))
-                    .and(qCampaignDetails.sellerStatus.eq(SellerStatus.WAIT))
+                qCampaignDetails.sellerStatus.eq(SellerStatus.WAIT)
+                    .and(qCampaignDetails.isDelete.eq(false))
+                    .and(
+                        qCampaignDetails.applyDate.between(now.minusDays(1),now.plusDays(1))
+                    )
+            ).or(
+                qCampaignDetails.sellerStatus.eq(SellerStatus.PROGRESS)
+                    .and(qCampaignDetails.isDelete.eq(false))
+                    .and(
+                        qCampaignDetails.applyDate.between(now.minusDays(1),now.plusDays(1))
+                    )
+            )
+            .or(
+                qCampaignDetails.sellerStatus.eq(SellerStatus.COMPLETE)
+                    .and(qCampaignDetails.isDelete.eq(false))
             )
         }
 
         // 순차정렬 enum 커스텀
         val order = CaseBuilder()
-            .`when`(qCampaign.campaignStatus.eq(CampaignStatus.PROGRESS)).then(0)
-            .`when`(qCampaign.campaignStatus.eq(CampaignStatus.WAIT)).then(1)
-            .`when`(qCampaign.campaignStatus.eq(CampaignStatus.FINISH)).then(2)
+            .`when`(qCampaignDetails.sellerStatus.eq(SellerStatus.ACTIVE)).then(0)
+            .`when`(qCampaignDetails.sellerStatus.eq(SellerStatus.WAIT)).then(1)
+            .`when`(qCampaignDetails.sellerStatus.eq(SellerStatus.PROGRESS)).then(2)
+            .`when`(qCampaignDetails.sellerStatus.eq(SellerStatus.COMPLETE)).then(3)
             .otherwise(3)
 
         return query
@@ -262,105 +277,6 @@ class CampaignService constructor(
     }
 
     /**
-     * 캠페인 정보 등록
-     * @param request: SaveCampaignRequestDTO
-     * @return Boolean
-     * @exception CampaignException
-     */
-    @Transactional
-    @Throws(CampaignException::class)
-    fun setCampaign(request: SaveCampaignRequestDTO ): Boolean {
-
-        // 총 모집인원
-        val totalRecruitCount = if ( request.optionType == OptionType.SINGLE ) {
-            request.options.sumOf { it.recruitPeople }
-        }else {
-            request.options.map {
-                it.subOption?.sumOf { it.recruitPeople }
-            }.sumOf { it ?: 0 }
-        }
-
-        // 활성화 기간
-        val activeCount = getLocalDateBetween(request.startSaleDateTime, request.endSaleDateTime)
-
-        // 캠페인 정보 등록
-        val campaign = campaignRepository.save(Campaign(
-            companyName = request.companyName,
-            campaignPlatform = request.platform,
-            campaignTitle = request.productTitle,
-            campaignStatus = CampaignStatus.WAIT,
-            campaignCategory = request.category,
-            campaignUrl = request.campaignLink,
-            campaignImgUrl = request.campaignImgUrl,
-            campaignPrice = request.campaignPrice,
-            campaignProgressPrice = request.progressPrice,
-            campaignTotalPrice = ( request.campaignPrice + request.reviewPoint ) * request.options.sumOf { it.recruitPeople },
-            optionCount = request.options.size,
-            reviewPoint = request.reviewPoint,
-            totalRecruitCount = totalRecruitCount,
-            activeDate = request.startSaleDateTime,
-            finishDate = request.endSaleDateTime,
-            sellerRequest = request.sellerRequest,
-            sellerGuide = request.sellerGuide,
-            dailyRecruitCount = totalRecruitCount / activeCount,
-            startTime = request.startTime,
-            endTime = request.endTime
-        ))
-
-        val now = LocalDate.now()
-
-        // 캠페인 진행날짜별 데이터 등록
-        for ( i in 0 .. activeCount ) {
-            campaignDetailsRepository.save(
-                CampaignDetails(
-                    campaign = campaign,
-                    applyDate = now.plusDays(i),
-                    sellerStatus = SellerStatus.WAIT,
-                    sortNo = i.toInt(),
-                    recruitCount = totalRecruitCount / activeCount
-                )
-            )
-        }
-
-        // 캠페인 옵션 정보 등록
-        if ( request.optionType == OptionType.SINGLE ) { // 단독형 옵션
-            request.options.forEachIndexed { index,option ->
-                campaignOptionsRepository.save(CampaignOptions(
-                    campaign = campaign,
-                    title = option.optionTitle,
-                    optionType = request.optionType,
-                    order = index,
-                    recruitPeople = option.recruitPeople
-                ))
-            }
-        }else { // 조합형 옵션
-            request.options.forEachIndexed { index,option ->
-                val options = campaignOptionsRepository.save(campaignOptionsRepository.save(CampaignOptions(
-                    campaign = campaign,
-                    title = option.optionTitle,
-                    optionType = request.optionType,
-                    order = index,
-                    recruitPeople = option.subOption?.sumOf { it.recruitPeople } ?: 0
-                )))
-
-                option.subOption!!.forEachIndexed { subIndex, subOption ->
-                    campaignSubOptionsRepository.save(
-                        CampaignSubOptions(
-                            campaign = campaign,
-                            campaignOptions = options,
-                            title = subOption.subOptionTitle,
-                            order = subIndex,
-                            addPrice = subOption.addPrice,
-                            recruitPeople = subOption.recruitPeople,
-                        )
-                    )
-                }
-            }
-        }
-        return true
-    }
-
-    /**
      * 캠페인 참여 신청
      * @param request: EnrollCampaignRequestDTO
      * @return Boolean
@@ -377,6 +293,11 @@ class CampaignService constructor(
         val campaignDetails = campaignDetailsRepository.findById(request.campaignDetailsId)
             .orElseThrow { throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST) }
 
+        // 캠페인 상세정보가 아직 게시전이라면
+        if ( campaignDetails.sellerStatus == SellerStatus.WAIT ) {
+            throw CampaignException(CampaignError.CAMPAIGN_STATUS_WAIT)
+        }
+
         // 캠페인 정보 조회
         val campaign = campaignDetails.campaign
             ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
@@ -392,27 +313,27 @@ class CampaignService constructor(
         val enroll = enrollList.filter { it?.enrollStatus != EnrollStatus.CANCEL  }
 
         // 중복 설정이 참 이라면
-        if ( campaign.isDuplicated ) {
+        if ( campaign.isNotDuplicated ) {
             throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_DUPLICATED)
         }
 
         // 캠페인 참여 인원이 꽉 찼을 경우,
-        if ( campaignDetails.joinCount >= campaignDetails.recruitCount ) {
-            applicationEventPublisher.publishEvent(
-                CampaignDetailsEventListener.CampaignDetailsUpdateEvent(campaignDetails)
-            )
-            throw CampaignException(CampaignError.CAMPAIGN_FULL_RECRUIT)
-        }
+//        if ( campaignDetails.joinCount >= campaignDetails.recruitCount ) {
+//            applicationEventPublisher.publishEvent(
+//                CampaignDetailsEventListener.CampaignDetailsUpdateEvent(campaignDetails)
+//            )
+//            throw CampaignException(CampaignError.CAMPAIGN_FULL_RECRUIT)
+//        }
 
         // 사용자의 플랫폼의 아이디가 존재하지 않는다면 오류
         when (campaign.campaignPlatform) {
             CampaignPlatform.COUPANG -> {
-                if ( user.cpId == null ) {
+                if ( user?.userInfo?.cpId == null ) {
                     throw CampaignException(CampaignError.CAMPAIGN_CP_ID_NULL)
                 }
             }
             CampaignPlatform.NAVER -> {
-                if (user.nvId == null) throw CampaignException(CampaignError.CAMPAIGN_NV_ID_NULL)
+                if (user?.userInfo?.nvId == null) throw CampaignException(CampaignError.CAMPAIGN_NV_ID_NULL)
             }
             else -> {}
         }
@@ -438,7 +359,7 @@ class CampaignService constructor(
         // 하위 옵션이 존재한다면
         val subOption = if (request.campaignSubOptionId != null) {
 
-            if ( option.subOptions.none { it.id == request.campaignSubOptionId } ) {
+            if ( option.subOptions!!.none { it.id == request.campaignSubOptionId } ) {
                 throw CampaignException(CampaignError.SUB_OPTION_IS_NOT_CONTAIN_OPTION)
             }
 
@@ -457,6 +378,8 @@ class CampaignService constructor(
                 enrollDate = LocalDate.now(),
                 enrollStatus = EnrollStatus.APPLY,
                 campaignDetails = campaignDetails,
+                reviewStatus = ImageStatus.REGISTER,
+                orderStatus = ImageStatus.REGISTER,
                 cancelYn = false
             )
         )
@@ -507,109 +430,7 @@ class CampaignService constructor(
         return true
     }
 
-    @Transactional
-    @Throws(CampaignException::class)
-    fun updateCampaign(campaignId: Long, request: UpdateCampaignRequestDTO): Boolean {
 
-        val campaign = campaignRepository.findById(campaignId)
-            .orElseThrow {  throw CampaignException(CampaignError.OPTION_IS_NOT_EMPTY) }
-
-        val activeDate = getLocalDateBetween(request.startSaleDateTime, request.endSaleDateTime)
-
-        campaign.campaignTitle = request.productTitle
-        campaign.campaignImgUrl = request.campaignImgUrl
-        campaign.campaignPrice = request.campaignPrice
-        campaign.campaignTotalPrice = ( request.campaignPrice + request.reviewPoint ) * request.options.sumOf { it.recruitPeople }
-        campaign.dailyRecruitCount = activeDate.div(request.options.sumOf { it.recruitPeople })
-        campaign.startTime = request.startTime
-        campaign.endTime = request.endTime
-        campaign.totalRecruitCount = request.options.sumOf { it.recruitPeople }
-        campaign.optionCount = request.options.size
-        campaign.reviewPoint = request.reviewPoint
-        campaign.activeDate = request.startSaleDateTime
-        campaign.finishDate = request.endSaleDateTime
-        campaign.sellerRequest = request.sellerRequest
-        campaign.companyName = request.companyName
-        campaign.campaignTitle = request.productTitle
-        campaign.campaignCategory = request.category
-        campaign.updateAt = LocalDateTime.now()
-
-        campaign.updateAt = LocalDateTime.now()
-
-        // 옵션 데이터 조회
-        val campaignOptions = campaign.options
-
-        // 요청 데이터 분류
-        val updateOptions = request.options.associateBy { it.campaignOptionId }
-
-        // 삭제 요청할 옵션 데이터 목록 취합
-        val deleteOptions = campaignOptions.filter { it.id !in updateOptions.keys }.map { it }
-        if ( deleteOptions.isNotEmpty() ) {
-            this.campaignOptionsRepository.deleteAll(deleteOptions)
-            this.campaignOptionsRepository.flush()
-        }
-
-        // 수정할 데이터 목록
-        val updateOptionsList = campaignOptions
-            .filter { it.id in updateOptions.keys }
-            .mapIndexed { index, options ->
-                CampaignOptions(
-                    id = options.id,
-                    title = request.options[index].optionTitle,
-                    campaign = campaign,
-                    optionType = request.optionType,
-                    recruitPeople = if ( request.optionType == OptionType.SINGLE ) {
-                        request.options.sumOf { it.recruitPeople }
-                    }else {
-                        request.options[index].subOption!!.sumOf { it.recruitPeople }
-                    },
-                    order = index,
-                    updateAt = LocalDateTime.now()
-                )
-            }.toMutableList()
-
-        if ( request.optionType == OptionType.MULTI ) {
-            // 수정 요청 하위 옵션 데이터
-            val updateSubOptionsMap = mutableMapOf<Long, UpdateCampaignRequestDTO.SubOptions>()
-            request.options.map {
-                it.subOption!!.forEach { option ->
-                    updateSubOptionsMap[option.campaignSubOptionId] = option
-                }
-            }
-
-            val deleteSubOptions = campaign.subOptions.filter { it.id !in updateSubOptionsMap.keys }.map { it }
-            if (deleteSubOptions.isNotEmpty()) {
-                this.campaignSubOptionsRepository.deleteAll(deleteSubOptions)
-                this.campaignSubOptionsRepository.flush()
-            }
-
-            // 수정 데이터 취합
-            val updateSubOptionList = mutableListOf<CampaignSubOptions>()
-
-            request.options.mapIndexed { index, option ->
-                option.subOption?.mapIndexed { subOptionIdx, subOptions ->
-                    updateSubOptionList.add(
-                        CampaignSubOptions(
-                            id = subOptions.campaignSubOptionId,
-                            title = subOptions.subOptionTitle,
-                            campaign = campaign,
-                            campaignOptions = updateOptionsList[index],
-                            recruitPeople = subOptions.recruitPeople,
-                            addPrice = subOptions.addPrice,
-                            order = subOptionIdx,
-                            updateAt = LocalDateTime.now()
-                        )
-                    )
-                }
-            }
-            campaign.subOptions = updateSubOptionList
-        }
-        campaign.options = updateOptionsList
-
-        this.campaignRepository.save(campaign) // 캠페인 데이터 수정
-
-        return true
-    }
 
     /**
      * 마이캠페인 목록 조회 서비스
@@ -632,43 +453,44 @@ class CampaignService constructor(
         val myCampaigns = enrollCampaigns
             ?.map {
             MyCampaignResponseDTO.MyCampaigns(
-                campaignEnrollId = it.id,
-                campaignStatus = it.enrollStatus,
-                registerDate = it.createAt,
-                campaignImgUrl = it.campaign?.campaignImgUrl,
-                campaignTitle = it.campaign?.campaignTitle,
-                campaignLink = it.campaign?.campaignUrl,
-                sellerGuide = it.campaign?.sellerGuide,
-                orderStatus = it.inspectOrderYn,
-                reviewStatus = it.inspectReviewYn
+                campaignEnrollId = it?.id,
+                campaignStatus = it?.enrollStatus,
+                registerDate = it?.createAt,
+                campaignImgUrl = it?.campaign?.campaignImgUrl,
+                campaignTitle = it?.campaign?.campaignTitle,
+                campaignLink = it?.campaign?.campaignUrl,
+                sellerGuide = it?.campaign?.sellerGuide,
+                orderStatus = it?.orderStatus,
+                reviewStatus = it?.reviewStatus
             )
         }
 
-        val point = pointRepository.findByUser(user)
-            ?: pointRepository.save(Point(
+        val isHavePoint = pointRepository.existsByUser(user)
+        val point = if ( !isHavePoint ) {
+            this.pointRepository.save(Point(
                 user = user,
                 remainPoint = 0,
                 expectPoint = 0,
                 totalChangePoint = 0,
                 createAt = LocalDateTime.now()
             ))
+        }else {
+            this.pointRepository.findByUser(user)
+                ?: throw PointException(PointError.POINT_IS_NOT_EXIST)
+        }
 
         val exchange = pointExchangeRepository.findByUserAndStatus(user, ExchangeStatus.REQ)
 
         val myCampaignUserInfo = MyCampaignResponseDTO.MyCampaignUserInfo(
-            name = user.name,
-            loginId = user.username,
+            name = user?.userInfo?.username,
+            loginId = user.email,
             expectPoint = point.expectPoint,
             totalPoint = point.totalChangePoint,
             remainPoint = point.remainPoint,
-            exchangePoint = exchange.filter { it?.status == ExchangeStatus.REQ }.sumOf{ it?.pointValue ?: 0 }
+            exchangePoint = exchange?.filter { it?.status == ExchangeStatus.REQ }?.sumOf{ it?.pointValue ?: 0 }
         )
 
         return MyCampaignResponseDTO(
-            joinCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.APPLY },
-            progressCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.PROGRESS },
-            inspectCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.INSPECT },
-            reviewCount = enrollCampaigns?.count{ it.enrollStatus == EnrollStatus.REVIEW },
             userInfo = myCampaignUserInfo,
             myCampaigns = myCampaigns
         )
@@ -691,93 +513,60 @@ class CampaignService constructor(
             throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST)
         }
 
-        // 해당 등록 캠페인 상태 정보
-        when ( enroll.enrollStatus ) {
-            // 상태값이 후기작성 상태일 경우
-            EnrollStatus.REVIEW -> {
-                // 캠페인 정보 조회 (일련번호 디렉토리 값으로 만들기 위해 조회)
-                val campaign = enroll.campaign
-                    ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
-                // AmazonS3 이미지 파일 업로드
-                val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}/review")
+        if ( enroll.enrollStatus == EnrollStatus.REVIEW ) {
+            // 캠페인 정보 조회 (일련번호 디렉토리 값으로 만들기 위해 조회)
+            val campaign = enroll.campaign
+                ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
 
-                enroll.enrollStatus = EnrollStatus.INSPECT
-                enroll.updateAt = LocalDateTime.now()
-                this.campaignEnrollRepository.save(enroll)
-                return true
-            }
-            EnrollStatus.INSPECT -> {
-                // 캠페인 정보 조회 (일련번호 디렉토리 값으로 만들기 위해 조회)
-                val campaign = enroll.campaign
-                    ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
+            // AmazonS3 이미지 파일 업로드
+            val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}/review")
 
-                // AmazonS3 이미지 파일 업로드
-                val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}/review")
-
-                // 이미지 URL 업로드
-                enroll.reviewImgUrl = fileImgUrl
-                enroll.inspectReviewYn  = null // 검토중으로 상태값 재변경
-                enroll.updateAt = LocalDateTime.now()
-                this.campaignEnrollRepository.save(enroll)
-                return true
-            }
-            // 예외의 경우
-            else -> {
-                throw CampaignException(CampaignError.CAMPAIGN_REVIEW)
-            }
+            enroll.reviewImgUrl = fileImgUrl.imageUrl
+            enroll.reviewStatus = ImageStatus.INSPECT
+            enroll.updateAt = LocalDateTime.now()
+            this.campaignEnrollRepository.save(enroll)
         }
+
+        return true
     }
 
     /**
-     * 주문번호 작성 서비스
+     * 주문번호 이미지 등록 서비스
      * @param request: EnrollProductOrderNoRequestDTO
      * @return Boolean
      * @exception CampaignException
      */
     @Transactional
     @Throws(CampaignException::class)
-    fun setProductOrderImageUrl(request: EnrollReviewRequestDTO, image: MultipartFile): Boolean {
+    fun setOrderImage(request: EnrollReviewRequestDTO, image: MultipartFile): Boolean {
 
+        // 캠페인 참여 정보 조회
         val enroll = campaignEnrollRepository.findById(request.campaignEnrollId)
             .orElseThrow { throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST) }
 
+        // 캠페인 참여자와 요청한 유저의 아이디가 동일하지 않을 경우 오류 발생
         if ( enroll.user?.id != request.userId ) {
             throw CampaignException(CampaignError.REGISTER_CAMPAIGN_NOT_EXIST)
         }
 
-        when ( enroll.enrollStatus ) {
-            EnrollStatus.PROGRESS -> {
-                // 캠페인 정보 조회 (일련번호 디렉토리 값으로 만들기 위해 조회)
-                val campaign = enroll.campaign
-                    ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
-                // AmazonS3 이미지 파일 업로드
-                val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}/order")
-                // 해당 상태가 이미지 재검수 요청이라면
-                enroll.orderImageUrl = fileImgUrl
-                enroll.enrollStatus = EnrollStatus.REVIEW
-                enroll.updateAt = LocalDateTime.now()
-                this.campaignEnrollRepository.save(enroll)
-                return true
-            }
-            EnrollStatus.INSPECT -> {
-                // 캠페인 정보 조회 (일련번호 디렉토리 값으로 만들기 위해 조회)
-                val campaign = enroll.campaign
-                    ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
+        // 캠페인 참여 상태가 진행(PROGRESS)일 경우
+        if ( enroll.enrollStatus == EnrollStatus.PROGRESS ) {
 
-                // AmazonS3 이미지 파일 업로드
-                val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}/review")
+            val campaign = enroll.campaign
+                ?: throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST)
 
-                // 해당 상태가 이미지 재검수 요청이라면
-                // 이미지 URL 업로드
-                enroll.reviewImgUrl = fileImgUrl
-                enroll.inspectOrderYn  = null // 검토중으로 상태값 재변경
-                enroll.updateAt = LocalDateTime.now()
-                this.campaignEnrollRepository.save(enroll)
-                return true
-            }
-            else -> {
-                throw CampaignException(CampaignError.CAMPAIGN_ORDER_NO)
-            }
+            // AmazonS3 이미지 파일 업로드
+            val fileImgUrl = amazonS3Service.uploadMultipartFile(image, "${campaign.id}/order")
+
+            // 해당 상태가 이미지 재검수 요청이라면
+            enroll.orderImageUrl = fileImgUrl.imageUrl
+            enroll.orderStatus = ImageStatus.INSPECT
+            enroll.updateAt = LocalDateTime.now()
+            this.campaignEnrollRepository.save(enroll)
+
+            return true
+        }else {
+            throw CampaignException(CampaignError.CAMPAIGN_ORDER_NO)
         }
     }
 
@@ -797,6 +586,13 @@ class CampaignService constructor(
             enroll.cancelYn = true
             enroll.updateAt = LocalDateTime.now()
             enroll.enrollStatus = EnrollStatus.CANCEL
+
+            val campaignDetails = enroll.campaignDetails
+
+            campaignDetails.joinCount = if ( (campaignDetails.joinCount - 1) <= 0 ) 0 else {
+                campaignDetails.joinCount - 1
+            }
+
             this.campaignEnrollRepository.save(enroll)
 
             val pointAttribute = pointAttributeRepository.findByCampaignEnroll(enroll)
@@ -818,25 +614,13 @@ class CampaignService constructor(
             point.updateAt = LocalDateTime.now()
             this.pointRepository.save(point)
 
+
+
         }else {
             throw CampaignException(CampaignError.CAMPAIGN_DO_NOT_CANCEL)
         }
         return true
     }
 
-    /**
-     * 시작일과 종료일의 차이 값
-     * @param startDate: LocalDate,
-     * @param endDate: LocalDate
-     * @return Long
-     * @exception CampaignException
-     */
-    @Throws(CampaignException::class)
-    private fun getLocalDateBetween(startDate: LocalDate, endDate: LocalDate): Long {
-        if ( startDate.isBefore(endDate) ) {
-            return ChronoUnit.DAYS.between(startDate,endDate)
-        }else {
-            throw CampaignException(CampaignError.START_DATE_SET)
-        }
-    }
+
 }

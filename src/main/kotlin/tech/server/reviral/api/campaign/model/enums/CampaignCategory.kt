@@ -15,5 +15,8 @@ import com.fasterxml.jackson.annotation.JsonFormat
  */
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 enum class CampaignCategory(private val desc: String) {
-    TIME("시간구매"),DAILY("당일구매");
+    AB("AIR BOX"), PT("PHOTO"), EX("EXPERIENCE");
+
+    fun desc() = desc
+
 }

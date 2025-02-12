@@ -8,11 +8,8 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -56,20 +53,39 @@ class SecurityConfig(
         http.authorizeHttpRequests {
             // Campaign URL Permit
             it.requestMatchers(
-                HttpMethod.GET,
-                "/api/v1/campaign",
-                "/api/v1/campaign/{campaignDetailsId}",
+                "/api/v1/business/campaigns/{campaignId}",
                 "/api/v1/users/id-check",
+                "/api/v1/campaign/{campaignDetailsId}",
             ).permitAll()
-
+            // User Authorized
             it.requestMatchers(
-                HttpMethod.POST,"/api/v1/campaign/save",
+                HttpMethod.POST,
+                "/api/v1/business/signup",
+                "/api/v1/business/sign-in",
+                "/api/v1/oauth/callback/kakao",
+                "/api/v1/oauth/callback/naver",
+                "/api/v1/users/phone/authorize/valid",
+                "/api/v1/users/phone/authorize/send",
+                "/api/v1/campaign/save",
                 "/api/v1/users/email/verify/{type}",
                 "/api/v1/users/email/authorized/{type}",
                 "/api/v1/users/admin/sign-in",
                 "/api/v1/users/sign-in",
-                "/api/v1/users/sign-up",
-                "/api/v1/users/reload"
+                "/api/v1/users/sign-up/**",
+                "/api/v1/users/logout/{userId}",
+                "/api/v1/users/reload",
+                "/api/v1/business/campaign/enroll/check/{imageCheckStatus}",
+                "/api/v1/business/campaign/enroll/start",
+                "/api/v1/business/campaign/detail",
+                "/api/v1/business/campaign/begin",
+                "/api/v1/business/campaign/begin/separate",
+            ).permitAll()
+
+            it.requestMatchers(
+                HttpMethod.GET,
+                "/api/v1/users/redirect",
+                "/api/v1/campaign",
+                "/api/v1/oauth/authorize/{provider}"
             ).permitAll()
 
             it.requestMatchers(
@@ -77,12 +93,12 @@ class SecurityConfig(
             ).permitAll()
 
             it.requestMatchers(
-                HttpMethod.POST,
-                "/api/v1/campaign/admin/list/{campaignId}",
-                "/api/v1/campaign/admin/list",
+                HttpMethod.GET,
+                "/api/v1/business/campaigns",
+                "/api/v1/business/campaigns"
             ).hasAuthority("ROLE_ADMIN")
 
-            // Resource Permit
+            // Resource And OAuth Permit
             it.requestMatchers(
                 "/configuration/**",
                 "/v2/api-docs/**",

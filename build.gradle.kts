@@ -32,6 +32,15 @@ repositories {
 
 dependencies {
 
+	//JSOUP
+	implementation("org.jsoup:jsoup:1.15.4")
+
+	//SOLAPI
+	implementation("net.nurigo:sdk:4.2.9")
+
+	//Logback
+	implementation("ch.qos.logback:logback-core")
+
 	// AWS S3
 	implementation ("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
 
@@ -79,6 +88,9 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
 
 }
 

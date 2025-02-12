@@ -1,20 +1,16 @@
 package tech.server.reviral.api.account.controller
 
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.validation.Valid
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import tech.server.reviral.api.account.model.dto.*
 import tech.server.reviral.api.account.service.AccountService
 import tech.server.reviral.common.config.docs.account.*
+import tech.server.reviral.common.config.message.MessageService
+import tech.server.reviral.common.config.response.exception.BasicException
+import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 import tech.server.reviral.common.config.security.JwtToken
 
@@ -33,91 +29,82 @@ import tech.server.reviral.common.config.security.JwtToken
 @RequestMapping("/api/v1/users")
 @Tag(name = "회원 정보")
 class AccountController constructor(
-    private val accountService: AccountService
+    private val accountService: AccountService,
+    private val messageService: MessageService
 ){
 
-    @PostMapping("/sign-in")
-    @SignInExplain
-    fun signIn( @RequestBody request: SignInRequestDTO ): ResponseEntity<WrapResponseEntity<JwtToken>> {
-        val token = accountService.signIn(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.ACCEPTED, "jwt", token)
+    @PhoneAuthorizeExplain
+    @PostMapping("/phone/authorize/{type}")
+    fun getPhoneAuthorize(
+        @RequestBody request: PhoneAuthorizeRequestDTO,
+        @PathVariable type: String
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        return when(type) {
+            "valid" -> {
+                val isValid = messageService.isValidAuthCode(request.phone, request.code!!)
+                WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isValid", isValid)
+            }
+            "send" -> {
+                val send = messageService.sendAuthorizationCode(request.phone)
+                WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSend", send)
+            }
+            else -> {
+                throw BasicException(BasicError.DEFAULT)
+            }
+        }
     }
 
-    @PostMapping("/admin/sign-in")
-    fun login(@RequestBody request: SignInRequestDTO): ResponseEntity<WrapResponseEntity<JwtToken>> {
-        val login = accountService.signInToAdmin(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"jwt", login)
+    @BasicUserInfoExplain
+    @PostMapping("/info/basic")
+    fun setStandardUserInfo(@RequestBody request: BasicUserInfoRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val basic = accountService.setBasicUserInfo(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSave", true)
     }
 
-    @PostMapping("/sign-up")
-    @SignUpExplain
-    fun signUp(@RequestBody @Valid request: SignUpRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val signUp = accountService.signUp(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "signUp", signUp)
-    }
-
-    @GetMapping("/id-check")
-    @IdCheckExplain
-    fun isLoginIdDuplicated(@RequestParam loginId: String): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val isLoginIdDuplicated = accountService.isLoginIdDuplicated(loginId)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isDuplicated", isLoginIdDuplicated)
-    }
-
-    @PostMapping("/reload")
-    @JwtReloadExplain
-    fun reloadUserByRefreshToken(@RequestBody request: ReloadRequestDTO): ResponseEntity<WrapResponseEntity<JwtToken>> {
-        val reissueToken =  accountService.reloadUserByRefreshToken(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "jwt",reissueToken)
-    }
-
-    @PostMapping("/logout/{userId}")
-    @LogoutExplain
-    fun logout(@PathVariable userId: Long) {
-        accountService.logout(userId)
-    }
-
-    @PostMapping("/info/{userId}")
     @UserInfoExplain
+    @PostMapping("/info/{userId}")
     fun getUserInfo(@PathVariable userId: Long): ResponseEntity<WrapResponseEntity<UserInfoResponseDTO>> {
         val userInfo = accountService.getUserInfo(userId)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "userInfo", userInfo)
     }
 
-    @PostMapping("/email/authorized/{type}")
-    @SendAuthorizedEmailExplain
-    fun sendAuthorizedCode(
-        @PathVariable("type") type: String,
-        @RequestBody request: EmailAuthorizedRequestDTO
-    ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val send = accountService.sendAuthorizedToEmail(type,request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isSend", send)
-    }
-
-    @PostMapping("/email/verify/{type}")
-    @VerifyEmailAuthorizedCodeExplain
-    fun verifyAuthorizedCode(
-        @PathVariable("type") type:String,
-        @RequestBody request: AuthorizeCodeRequestDTO
-    ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val isVerifyCode = accountService.verifyAuthorizedEmailCode(type,request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isVerify", isVerifyCode)
-    }
-
-    @PutMapping("/update")
     @UpdateUserInfoExplain
-    fun updateUserInfo( @RequestBody request: UpdateUserInfoRequestDTO ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val update = accountService.updateUserInfo(request)
+    @PutMapping("/info/{userId}")
+    fun setUserInfo(
+        @PathVariable userId: Long,
+        @RequestBody request: UpdateUserInfoRequestDTO
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val update = accountService.setUserInfo(request, userId)
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isUpdated", update)
     }
 
-    @PostMapping("/verify/{type}")
-    @ValidationPasswordExplain
-    fun isValidationPassword(
-        @RequestBody request: ValidationPasswordRequestDTO,
-        @PathVariable("type") type: String
+    @GetMapping("/info/verify")
+    fun hasUserInfo(
+        request: HttpServletRequest
     ): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val isValidation = accountService.isValidPassword(request, type)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"isValid", isValidation)
+        val hasUserInfo = accountService.hasUserInfo(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "hasUserInfo", hasUserInfo)
     }
 
+    @JwtReloadExplain
+    @PostMapping("/reload")
+    fun reloadUserByRefreshToken(@RequestBody request: ReloadRequestDTO): ResponseEntity<WrapResponseEntity<JwtToken>> {
+        val reissueToken =  accountService.reloadUserByRefreshToken(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "jwt",reissueToken)
+    }
+
+    @LogoutExplain
+    @PostMapping("/logout/{userId}")
+    fun logout(@PathVariable userId: Long) {
+        accountService.logout(userId)
+    }
+
+    @PostMapping("/verify/password")
+    @ValidationPasswordExplain
+    fun isValidationPassword(
+        @RequestBody request: ValidPasswordRequestDTO
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val isValidation = accountService.isValidPassword(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"isValid", isValidation)
+    }
 }

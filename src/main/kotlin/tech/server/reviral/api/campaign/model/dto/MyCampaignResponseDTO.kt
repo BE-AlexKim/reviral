@@ -3,6 +3,7 @@ package tech.server.reviral.api.campaign.model.dto
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import tech.server.reviral.api.campaign.model.enums.EnrollStatus
+import tech.server.reviral.api.campaign.model.enums.ImageStatus
 import java.time.LocalDateTime
 
 /**
@@ -18,17 +19,6 @@ import java.time.LocalDateTime
  */
 @Schema(name = "나의 캠페인 목록 정보 모델")
 data class MyCampaignResponseDTO(
-    @Schema(description = "참여 신청 개수")
-    val joinCount: Int? = 0,
-
-    @Schema(description = "캠페인 진행 개수")
-    val progressCount: Int? = 0,
-
-    @Schema(description = "후기 작성 개수")
-    val reviewCount: Int? = 0,
-
-    @Schema(description = "캠페인 검수 개수")
-    val inspectCount: Int? = 0,
     @Schema(name = "마이 캠페인 사용자 정보 모델")
     val userInfo: MyCampaignUserInfo? = null,
     @Schema(name = "캠페인 목록")
@@ -68,8 +58,8 @@ data class MyCampaignResponseDTO(
         @Schema(description = "캠페인 셀러 요청사항")
         val sellerGuide: String?,
         @Schema(description = "주문번호 이미지 검수상태")
-        val orderStatus: Boolean? = null,
+        val orderStatus: ImageStatus? = null,
         @Schema(description = "후기 이미지 검수상태")
-        val reviewStatus: Boolean? = null
+        val reviewStatus: ImageStatus? = null
     )
 }

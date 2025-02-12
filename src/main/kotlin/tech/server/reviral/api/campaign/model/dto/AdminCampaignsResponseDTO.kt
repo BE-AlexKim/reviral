@@ -20,34 +20,40 @@ import java.time.LocalDateTime
  */
 @Schema(name = "어드민 캠페인 목록 정보 조회")
 data class AdminCampaignsResponseDTO(
-    @Schema(description = "캠페인 일련번호")
-    val campaignId: Long? = null,
+    @Schema(description = "콘텐츠 총 갯수")
+    val total: Int = 0,
+    val campaigns: MutableList<AdminCampaignsResult>
+) {
+    data class AdminCampaignsResult(
+        @Schema(description = "캠페인 일련번호")
+        val campaignId: Long? = null,
 
-    @Schema(description = "캠페인 상태 값")
-    val campaignStatus: CampaignStatus? = CampaignStatus.WAIT,
+        @Schema(description = "캠페인 상태 값")
+        val campaignStatus: CampaignStatus? = CampaignStatus.WAIT,
 
-    @Schema(description = "판매 시작일")
-    val startDate: LocalDate = LocalDate.now(),
+        @Schema(description = "판매 시작일")
+        val startDate: LocalDate = LocalDate.now(),
 
-    @Schema(description = "판매 종료일")
-    val finishDate: LocalDate = LocalDate.now(),
+        @Schema(description = "판매 종료일")
+        val finishDate: LocalDate = LocalDate.now(),
 
-    @Schema(description = "플랫폼")
-    val campaignPlatform: CampaignPlatform = CampaignPlatform.ETC,
+        @Schema(description = "플랫폼")
+        val campaignPlatform: CampaignPlatform = CampaignPlatform.ETC,
 
-    @Schema(description = "캠페인 명")
-    val campaignTitle: String = "",
+        @Schema(description = "캠페인 명")
+        val campaignTitle: String = "",
 
-    @Schema(description = "총 가격")
-    val campaignTotalPrice: Int = 0,
+        @Schema(description = "총 가격")
+        val campaignTotalPrice: Long = 0,
 
-    @Schema(description = "모집인원")
-    val totalRecruitCount: Int = 0,
+        @Schema(description = "모집인원")
+        val totalRecruitCount: Long = 0,
 
-    @Schema(description = "참여인원")
-    val totalJoinCount: Long = 0,
+        @Schema(description = "참여인원")
+        val totalJoinCount: Long = 0,
 
-    @Schema(description = "등록일")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val createAt: LocalDateTime = LocalDateTime.now()
-)
+        @Schema(description = "등록일")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        val createAt: LocalDateTime = LocalDateTime.now()
+    )
+}

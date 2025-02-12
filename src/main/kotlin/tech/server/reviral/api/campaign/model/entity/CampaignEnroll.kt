@@ -5,6 +5,9 @@ import org.hibernate.Hibernate
 import org.hibernate.annotations.Comment
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.campaign.model.enums.EnrollStatus
+import tech.server.reviral.api.campaign.model.enums.ImageStatus
+import tech.server.reviral.api.point.model.entity.PointAttribute
+import java.awt.Image
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
@@ -66,17 +69,19 @@ data class CampaignEnroll(
     @Comment("상품 주문번호")
     var orderImageUrl: String? = null,
 
-    @Column(name = "is_inspect_order")
+    @Column(name = "order_status")
+    @Enumerated(EnumType.STRING)
     @Comment("상품 주문번호 검수상태")
-    var inspectOrderYn: Boolean? = null,
+    var orderStatus: ImageStatus? = null,
 
     @Column(name = "review_img_url")
     @Comment("후기 이미지 링크")
     var reviewImgUrl: String? = null,
 
-    @Column(name = "is_inspect_review")
+    @Column(name = "review_status")
+    @Enumerated(EnumType.STRING)
     @Comment("후기 이미지 검수상태")
-    var inspectReviewYn: Boolean? = null,
+    var reviewStatus: ImageStatus? = null,
 
     @Column(name = "is_cancel")
     @Comment("캠페인 취소여부")
@@ -88,7 +93,10 @@ data class CampaignEnroll(
 
     @Column(name = "update_at")
     @Comment("최종 수정 일시")
-    var updateAt: LocalDateTime? = null
+    var updateAt: LocalDateTime? = null,
+
+    @OneToMany(mappedBy = "campaignEnroll", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var pointAttribute: MutableList<PointAttribute> = mutableListOf()
 
 ) {
     override fun equals(other: Any?): Boolean {

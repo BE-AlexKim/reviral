@@ -123,7 +123,7 @@ import java.lang.annotation.Inherited
                             {
                                 "status": 200,
                                 "data": {
-                                    "isDeleted": true
+                                    "isUpdated": true
                                 },
                                 "timestamp": "2024-11-27 23:59:59"
                             }

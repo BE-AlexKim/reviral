@@ -3,7 +3,9 @@ package tech.server.reviral.common.config.aws
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
+import com.amazonaws.services.s3.model.CannedAccessControlList
 import com.amazonaws.services.s3.model.ObjectMetadata
+import com.amazonaws.services.s3.model.PutObjectRequest
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -43,7 +45,11 @@ class AmazonS3Service constructor(
      */
     @Transactional
     @Throws(BasicException::class)
-    fun uploadMultipartFile(file: MultipartFile, path: String): String {
+    fun uploadMultipartFile(file: MultipartFile, path: String): UploadFile {
+
+        val maxSize = 5 * 1024 * 1024
+
+        if ( file.size > maxSize ) throw BasicException(BasicError.FILE_SIZE_FULL)
 
         val filename = generatedRandomFilename(file.originalFilename ?: "")
         log.info { "Amazon S3 업로드 파일 명 : $filename" }
@@ -53,7 +59,11 @@ class AmazonS3Service constructor(
         metadata.contentType = file.contentType
 
         try {
-            amazonS3.putObject(bucket, "$path/$filename", file.inputStream, metadata)
+            val putObjectRequest = PutObjectRequest(bucket, "$path/$filename", file.inputStream, metadata)
+                .withCannedAcl(CannedAccessControlList.PublicRead) // 퍼블릭 읽기 권한 추가
+
+            amazonS3.putObject(putObjectRequest)
+
         } catch (e: AmazonS3Exception) {
             log.error { "파일 업로드 S3 관련 오류 발생: ${e.message}" }
             throw BasicException(BasicError.FILE_UPLOAD_FAIL)
@@ -65,7 +75,13 @@ class AmazonS3Service constructor(
             throw BasicException(BasicError.FILE_UPLOAD_FAIL)
         }
 
-        return amazonS3.getUrl(bucket, filename).toString()
+        val url = amazonS3.getUrl(bucket, "${path}/${filename}").toString()
+
+        return UploadFile(
+            originalFilename = file.originalFilename ?: filename,
+            uploadFilename = filename,
+            imageUrl = url,
+        )
     }
 
     private fun generatedRandomFilename(originalFilename: String): String {
@@ -82,7 +98,7 @@ class AmazonS3Service constructor(
     @Throws(BasicException::class)
     private fun isFileExtension(originalFilename: String): String {
         val fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).lowercase()
-        val allowedExtensions = arrayListOf("jpg","png","gif","jpeg")
+        val allowedExtensions = arrayListOf("jpg","png","gif","jpeg","tiff")
 
         if ( !allowedExtensions.contains(fileExtension) ) {
             throw BasicException(BasicError.FILE_IMG_EXTENSION)

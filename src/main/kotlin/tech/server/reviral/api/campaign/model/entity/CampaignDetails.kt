@@ -33,7 +33,7 @@ data class CampaignDetails(
 
     @Column(name = "campaign_date")
     @Comment("진행날짜")
-    val applyDate: LocalDate,
+    var applyDate: LocalDate,
 
     @Column(name = "campaigns_status")
     @Enumerated(EnumType.STRING)
@@ -44,13 +44,17 @@ data class CampaignDetails(
     @Comment("캠페인 시작인원")
     var joinCount: Long = 0,
 
+    @Column(name = "is_delete")
+    @Comment("삭제 유무")
+    var isDelete: Boolean = false,
+
     @Column(name = "sort_no")
     @Comment("캠페인 순서번호")
     val sortNo: Int = 0,
 
     @Column(name = "recruit_count")
     @Comment("모집인원")
-    val recruitCount: Long = 0,
+    var recruitCount: Long = 0,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

@@ -3,6 +3,7 @@ package tech.server.reviral.api.account.repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import tech.server.reviral.api.account.model.entity.User
+import tech.server.reviral.api.account.model.enums.Registration
 
 /**
  *packageName    : tech.server.reviral.api.account.repository
@@ -18,8 +19,14 @@ import tech.server.reviral.api.account.model.entity.User
 @Repository
 interface AccountRepository: JpaRepository<User, Long> {
 
-    fun findByLoginId(loginId: String?): User?
+    fun findByEmailAndRegistration(email: String?, registration: Registration): User?
 
-    fun existsUserByLoginId(loginId: String): Boolean
+    fun existsUserByEmail(email: String): Boolean
+
+    fun findBySidAndRegistration(sid: String, registration: Registration): User
+
+    fun existsBySidAndRegistration(sid: String, registration: Registration): Boolean
+
+    fun existsBySid(sid: String): Boolean
 
 }

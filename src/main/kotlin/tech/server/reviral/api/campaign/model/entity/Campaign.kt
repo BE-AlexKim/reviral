@@ -32,14 +32,14 @@ data class Campaign(
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_platform")
     @Comment("캠페인 플랫폼")
-    val campaignPlatform: CampaignPlatform? = null,
+    var campaignPlatform: CampaignPlatform? = null,
 
     @Column(name = "campaign_title")
     @Comment("캠페인 제목")
     var campaignTitle: String? = null,
 
     @Column(name = "campaign_progress_price")
-    val campaignProgressPrice: Int? = null,
+    var campaignProgressPrice: Int? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_category")
@@ -49,7 +49,7 @@ data class Campaign(
     @Enumerated(EnumType.STRING)
     @Column(name = "campaign_status")
     @Comment("캠페인 상태")
-    val campaignStatus: CampaignStatus? = null,
+    var campaignStatus: CampaignStatus? = null,
 
     @Column(name = "request_company")
     @Comment("업체명")
@@ -104,7 +104,7 @@ data class Campaign(
 
     @Column(name = "is_duplicated")
     @Comment("중복 가능여부")
-    val isDuplicated: Boolean = false,
+    val isNotDuplicated: Boolean = false,
 
     @Column(name = "duplicated_date")
     val duplicatedDate: Long? = null,
@@ -115,7 +115,7 @@ data class Campaign(
 
     @Column(name = "seller_guide", columnDefinition = "TEXT")
     @Comment("구매 가이드")
-    val sellerGuide: String? = null,
+    var sellerGuide: String? = null,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -134,7 +134,7 @@ data class Campaign(
     var options: MutableList<CampaignOptions> = mutableListOf(),
 
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    var subOptions: MutableList<CampaignSubOptions> = mutableListOf(),
+    var subOptions: MutableList<CampaignSubOptions>? = null,
 
 
     ) {
@@ -150,6 +150,6 @@ data class Campaign(
 
     @Override
     override fun toString(): String {
-        return this::class.simpleName + "(id = $id , campaignPlatform = $campaignPlatform , campaignTitle = $campaignTitle , campaignCategory = $campaignCategory , campaignStatus = $campaignStatus , companyName = $companyName , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyRecruitCount = $dailyRecruitCount , totalCount = $totalRecruitCount , optionCount = $optionCount , startTime = $startTime , endTime = $endTime , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , isDuplicated = $isDuplicated , duplicatedDate = $duplicatedDate , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
+        return this::class.simpleName + "(id = $id , campaignPlatform = $campaignPlatform , campaignTitle = $campaignTitle , campaignCategory = $campaignCategory , campaignStatus = $campaignStatus , companyName = $companyName , campaignUrl = $campaignUrl , campaignImgUrl = $campaignImgUrl , campaignPrice = $campaignPrice , campaignTotalPrice = $campaignTotalPrice , dailyRecruitCount = $dailyRecruitCount , totalCount = $totalRecruitCount , optionCount = $optionCount , startTime = $startTime , endTime = $endTime , reviewPoint = $reviewPoint , activeDate = $activeDate , finishDate = $finishDate , isDuplicated = $isNotDuplicated , duplicatedDate = $duplicatedDate , sellerRequest = $sellerRequest , createAt = $createAt , updateAt = $updateAt )"
     }
 }

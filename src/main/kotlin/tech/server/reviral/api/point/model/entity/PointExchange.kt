@@ -7,6 +7,7 @@ import org.hibernate.annotations.Comment
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.point.model.enums.ExchangeStatus
 import java.time.LocalDateTime
+import java.util.UUID
 
 /**
  *packageName    : tech.server.reviral.api.point.model.entity
@@ -34,7 +35,7 @@ data class PointExchange(
     @Enumerated(EnumType.STRING)
     @Column(name = "exchange_status")
     @Comment("포인트 상태 값")
-    val status: ExchangeStatus? = null,
+    var status: ExchangeStatus? = null,
 
     @Column(name = "point_value")
     @Comment("포인트 값")
@@ -42,7 +43,15 @@ data class PointExchange(
 
     @Column(name = "exchange_desc")
     @Comment("포인트 설명 값")
-    val exchangeDesc: String? = null,
+    var exchangeDesc: String? = null,
+
+    @Column(name = "exchange_unique_key", length = 14)
+    @Comment("출금 고유값")
+    var uniqueKey: String? = null,
+
+    @Column(name = "is_download")
+    @Comment("다계좌 다운로드 완료 여부")
+    var downloadYn: Boolean = false,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -50,7 +59,7 @@ data class PointExchange(
 
     @Column(name = "update_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val updateAt: LocalDateTime? = null,
+    var updateAt: LocalDateTime? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

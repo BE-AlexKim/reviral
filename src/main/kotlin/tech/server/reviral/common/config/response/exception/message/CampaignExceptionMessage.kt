@@ -12,6 +12,10 @@ package tech.server.reviral.common.config.response.exception.message
  * 2024-12-03        joy58       최초 생성
  */
 object CampaignExceptionMessage {
+    const val CAMPAIGN_MODIFY_IMPOSSIBLE = "캠페인이 시작되었다면, 수정이 불가능합니다."
+    const val CAMPAIGN_ENROLL_NOT_MATCH = "캠페인 참여자와 일치하지 않습니다."
+    const val CAMPAIGN_STATUS_NOT_WAIT = "캠페인이 대기중인 상태만 변경가능합니다."
+    const val CAMPAIGN_STATUS_WAIT = "모집 예정인 캠페인입니다. 다음에 신청해주세요."
     const val CAMPAIGN_CP_ID_NULL = "쿠팡 아이디를 등록해주세요."
     const val CAMPAIGN_NV_ID_NULL = "네이버 아이디를 등록해주세요."
     const val CAMPAIGN_CANCEL_JOIN = "캠페인을 취소한 당일날은 신청이 불가능합니다."

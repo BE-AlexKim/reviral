@@ -33,7 +33,7 @@ class CampaignDetailsEventListener(
     fun handleCampaignDetailsUpdate(event: CampaignDetailsUpdateEvent) {
         val campaignDetails = event.campaignDetails
 
-        campaignDetails.sellerStatus = SellerStatus.COMPLETE
+        campaignDetails.sellerStatus = SellerStatus.PROGRESS
         campaignDetails.updateAt = LocalDateTime.now()
         this.campaignDetailsRepository.save(campaignDetails)
 

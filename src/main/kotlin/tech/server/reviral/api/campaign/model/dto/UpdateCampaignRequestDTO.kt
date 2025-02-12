@@ -19,6 +19,9 @@ import java.time.LocalDate
  */
 @Schema(name = "캠페인 수정 요청 모델")
 data class UpdateCampaignRequestDTO(
+    @Schema(description = "캠페인 일련번호", required = true)
+    val campaignId: Long,
+
     @Schema(description = "업체명", example = "몽테르", required = true)
     val companyName: String,
 
@@ -49,6 +52,9 @@ data class UpdateCampaignRequestDTO(
     @Schema(description = "리뷰어 지급 포인트", example = "500", required = true)
     val reviewPoint: Int,
 
+    @Schema(description = "캠페인 진행비용", example = "3000", required = true)
+    val progressPrice: Int,
+
     @Schema(description = "판매 시작 날짜", example = "2024.12.31", required = true)
     val startSaleDateTime: LocalDate,
 
@@ -61,13 +67,15 @@ data class UpdateCampaignRequestDTO(
     @Schema(description = "상품 옵션", required = false)
     val options: MutableList<Options>,
 
-    @Schema(description = "요청사항", required = true)
-    val sellerRequest: String
-){
+    @Schema(description = "셀러 모집글", required = true)
+    val sellerRequest: String,
+
+    @Schema(description = "셀러 구매가이드", required = true)
+    val sellerGuide: String
+
+) {
     @Schema(name = "상품 옵션")
     data class Options(
-        @Schema(description = "옵션 일련번호")
-        val campaignOptionId: Long,
         @Schema(description = "옵션명", example = "털모자")
         val optionTitle: String,
         @Schema(description = "총 모집 인원", example = "100")
@@ -78,8 +86,6 @@ data class UpdateCampaignRequestDTO(
 
     @Schema(name = "하위 옵션")
     data class SubOptions(
-        @Schema(description = "하위 옵션 일련번호")
-        val campaignSubOptionId: Long,
         @Schema(description = "하위 옵션명", example = "L 사이즈")
         val subOptionTitle: String,
         @Schema(description = "추가 금액", example = "5000")
@@ -88,3 +94,4 @@ data class UpdateCampaignRequestDTO(
         val recruitPeople: Int
     )
 }
+

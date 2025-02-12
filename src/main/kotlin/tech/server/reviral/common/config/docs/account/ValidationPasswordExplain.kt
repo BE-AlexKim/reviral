@@ -25,13 +25,10 @@ import java.lang.annotation.Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Inherited
 @Operation(
-    summary = "비밀번호를 검증합니다.",
-    description = "비밀번호 검증이 필요한 페이지 접근 시, 해당 API를 사용하여 비밀번호를 검증합니다.",
-    parameters = [
-        Parameter(name = "type", description = "login(로그인 패스워드), point(포인트 패스워드)")
-    ],
+    summary = "2차 비밀번호를 검증합니다.",
+    description = "비밀번호 검증이 필요한 페이지 접근 시, 설정한 2차 비밀번호를 검증합니다.",
     requestBody = RequestBody(
-        description = "비밀번호를 검증합니다.",
+        description = "2차 비밀번호를 검증합니다.",
         content = [
             Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -82,13 +79,13 @@ import java.lang.annotation.Inherited
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "포인트 비밀번호 설정 오류",
-                        description = "포인트 비밀번호가 설정되지 않았습니다.",
+                        name = "2차 비밀번호 설정 오류",
+                        description = "2차 비밀번호가 설정되지 않았습니다.",
                         value = """
                             {
                                 "status": 500,
                                 "code": "BE0019",
-                                "message": "포인트 비밀번호를 설정해주세요.",
+                                "message": "2차 비밀번호를 설정해주세요.",
                                 "timestamp": "2024-11-27 23:59:59"
                             }
                         """

@@ -27,9 +27,6 @@ import java.lang.annotation.Inherited
 @Operation(
     summary = "캠페인 수정",
     description = "어드민 계정 권한으로 캠페인을 등록합니다.",
-    parameters = [
-        Parameter(name = "campaignId", description = "캠페인 고유일련번호", required = true)
-     ],
     requestBody = RequestBody(
         description = "캠페인을 정보를 수정합니다..",
         content = [
@@ -37,9 +34,10 @@ import java.lang.annotation.Inherited
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
                 examples = [
                     ExampleObject(
-                        name = "캠페인 등록 예시 - 당일구매/조합형 옵션상품",
+                        name = "캠페인 수정 예시 - 당일구매/조합형 옵션상품",
                         value = """
                                 {
+                                  "campaignId": 12,
                                   "companyName": "몽테르",
                                   "platform": "NAVER",
                                   "category": "DAILY",
@@ -48,8 +46,8 @@ import java.lang.annotation.Inherited
                                   "campaignLink": "https://smartstore.naver.com/votremonde/products/5719072766",
                                   "campaignPrice": 19900,
                                   "reviewPoint": 500,
-                                  "startSaleDateTime": "2024-12-05",
-                                  "endSaleDateTime": "2024-12-06",
+                                  "startSaleDateTime": "2025-01-23",
+                                  "endSaleDateTime": "2025-01-24",
                                   "optionType": "MULTI",
                                   "options": [
                                     {
@@ -60,52 +58,13 @@ import java.lang.annotation.Inherited
                                           "subOptionTitle": "선물강추 수출용 샤인머스켓 2kg(3수)",
                                           "addPrice": 0,
                                           "recruitPeople": 100
-                                        },{
-                                          "subOptionTitle": "선물강추 수출용 샤인머스켓 2kg(6수)",
-                                          "addPrice": 17000,
-                                          "recruitPeople": 100
-                                        },{
-                                          "subOptionTitle": "수출용 샤인머스켓 2kg(4수)",
-                                          "addPrice": -1000,
-                                          "recruitPeople": 100
-                                        }
-                                      ]
-                                    }
-                                  ],
-                                  "sellerRequest": "3수 샤인머스켓 소진시, 수출용 샤인머스켓으로 진행해주세요."
-                                }
-                        """
-                    ), ExampleObject(
-                        name = "캠페인 등록 예시 - 시간구매/조합형 옵션상품",
-                        value = """
-                                {
-                                  "companyName": "몽테르",
-                                  "platform": "NAVER",
-                                  "category": "TIME",
-                                  "startTime": "12:00",
-                                  "endTime": "14:00",
-                                  "productTitle": "캠벨포도 1kg 2kg 3kg 고당도 특품 상주 영동 대부 송산 켐벨 포도 [원산지:국산 등]",
-                                  "campaignImgUrl": "https://shop-phinf.pstatic.net/20230620_296/1687268816503OcDzQ_PNG/2284631376893470_1651916980.png?type=m510",
-                                  "campaignLink": "https://smartstore.naver.com/votremonde/products/5719072766",
-                                  "campaignPrice": 19900,
-                                  "reviewPoint": 500,
-                                  "startSaleDateTime": "2024-12-05",
-                                  "endSaleDateTime": "2024-12-06",
-                                  "optionType": "MULTI",
-                                  "options": [
-                                    {
-                                      "optionTitle": "고당도 샤인머스켓",
-                                      "recruitPeople": 300,
-                                      "subOption": [
+                                        },
                                         {
-                                          "subOptionTitle": "선물강추 수출용 샤인머스켓 2kg(3수)",
-                                          "addPrice": 0,
-                                          "recruitPeople": 100
-                                        },{
                                           "subOptionTitle": "선물강추 수출용 샤인머스켓 2kg(6수)",
                                           "addPrice": 17000,
                                           "recruitPeople": 100
-                                        },{
+                                        },
+                                        {
                                           "subOptionTitle": "수출용 샤인머스켓 2kg(4수)",
                                           "addPrice": -1000,
                                           "recruitPeople": 100
@@ -113,75 +72,8 @@ import java.lang.annotation.Inherited
                                       ]
                                     }
                                   ],
-                                  "sellerRequest": "3수 샤인머스켓 소진시, 수출용 샤인머스켓으로 진행해주세요."
-                                }
-                        """
-                    ), ExampleObject(
-                        name = "캠페인 등록 예시 - 시간구매/단일형 옵션상품",
-                        value = """
-                                {
-                                  "companyName": "몽테르",
-                                  "platform": "NAVER",
-                                  "category": "TIME",
-                                  "startTime": "12:00",
-                                  "endTime": "14:00",
-                                  "productTitle": "캠벨포도 1kg 2kg 3kg 고당도 특품 상주 영동 대부 송산 켐벨 포도 [원산지:국산 등]",
-                                  "campaignImgUrl": "https://shop-phinf.pstatic.net/20230620_296/1687268816503OcDzQ_PNG/2284631376893470_1651916980.png?type=m510",
-                                  "campaignLink": "https://smartstore.naver.com/votremonde/products/5719072766",
-                                  "campaignPrice": 19900,
-                                  "reviewPoint": 500,
-                                  "startSaleDateTime": "2024-12-05",
-                                  "endSaleDateTime": "2024-12-06",
-                                  "optionType": "SINGLE",
-                                  "options": [
-                                    {
-                                      "optionTitle": "고당도 샤인머스켓",
-                                      "recruitPeople": 300,
-                                      "subOption": null
-                                    },{
-                                      "optionTitle": "고당도 포도",
-                                      "recruitPeople": 100,
-                                      "subOption": null
-                                    },{
-                                      "optionTitle": "고당도 망고 2kg",
-                                      "recruitPeople": 200,
-                                      "subOption": null
-                                    }
-                                  ],
-                                  "sellerRequest": "3수 샤인머스켓 소진시, 수출용 샤인머스켓으로 진행해주세요."
-                                }
-                        """
-                    ), ExampleObject(
-                        name = "캠페인 등록 예시 - 당일구매/단일형 옵션상품",
-                        value = """
-                                {
-                                  "companyName": "몽테르",
-                                  "platform": "NAVER",
-                                  "category": "TIME",
-                                  "productTitle": "캠벨포도 1kg 2kg 3kg 고당도 특품 상주 영동 대부 송산 켐벨 포도 [원산지:국산 등]",
-                                  "campaignImgUrl": "https://shop-phinf.pstatic.net/20230620_296/1687268816503OcDzQ_PNG/2284631376893470_1651916980.png?type=m510",
-                                  "campaignLink": "https://smartstore.naver.com/votremonde/products/5719072766",
-                                  "campaignPrice": 19900,
-                                  "reviewPoint": 500,
-                                  "startSaleDateTime": "2024-12-05",
-                                  "endSaleDateTime": "2024-12-06",
-                                  "optionType": "SINGLE",
-                                  "options": [
-                                    {
-                                      "optionTitle": "고당도 샤인머스켓",
-                                      "recruitPeople": 300,
-                                      "subOption": null
-                                    },{
-                                      "optionTitle": "고당도 포도",
-                                      "recruitPeople": 100,
-                                      "subOption": null
-                                    },{
-                                      "optionTitle": "고당도 망고 2kg",
-                                      "recruitPeople": 200,
-                                      "subOption": null
-                                    }
-                                  ],
-                                  "sellerRequest": "3수 샤인머스켓 소진시, 수출용 샤인머스켓으로 진행해주세요."
+                                  "sellerRequest": "3수 샤인머스켓 소진시, 수출용 샤인머스켓으로 진행해주세요.",
+                                  "sellerGuide": "ggkkdd"
                                 }
                         """
                     )

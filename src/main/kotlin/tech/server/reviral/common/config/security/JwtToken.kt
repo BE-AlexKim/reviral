@@ -16,7 +16,14 @@ import java.time.LocalDateTime
  */
 @Schema(name = "JWT 토큰모델")
 data class JwtToken(
+    @Schema(description = "사용자 일련번호")
+    val userId: Long,
+    @Schema(description = "토큰 타입")
     val grantType: String = "Bearer",
+    @Schema(description = "엑세스 토큰")
     val accessToken: String,
-    val refreshToken: String
+    @Schema(description = "리프레시 토큰")
+    val refreshToken: String,
+    @Schema(description = "사용자 정보 유무")
+    var hasUserInfo: Boolean = false,
 )

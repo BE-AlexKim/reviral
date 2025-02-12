@@ -38,7 +38,7 @@ class JwtRedisRepository constructor(
 
     @Transactional
     fun setAuthorizationCode(key: String, code: String, expiration: Long) {
-        redisTemplate.opsForValue().set("$key", code, expiration, TimeUnit.MILLISECONDS)
+        redisTemplate.opsForValue().set(key, code, expiration, TimeUnit.MILLISECONDS)
     }
 
     @Transactional

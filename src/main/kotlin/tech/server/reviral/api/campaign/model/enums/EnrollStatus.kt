@@ -15,8 +15,6 @@ enum class EnrollStatus(private val desc: String) {
     APPLY("참여 진행중"),
     PROGRESS("진행"),
     REVIEW("후기 작성"),
-    INSPECT("검수"),
-    MODIFY("수정 요청"),
     CANCEL("취소"),
     COMPLETE("완료");
 

@@ -20,7 +20,9 @@ import tech.server.reviral.api.point.model.enums.ExchangeStatus
 @Repository
 interface PointExchangeRepository: JpaRepository<PointExchange, Long> {
 
-    fun findByUserAndStatus(user: User, status: ExchangeStatus): MutableList<PointExchange?>
+    fun findByUserAndStatus(user: User, status: ExchangeStatus): MutableList<PointExchange?>?
 
     fun findByUserOrderByCreateAt(user: User): MutableList<PointExchange>?
+
+    fun findByStatusAndDownloadYn(status: ExchangeStatus, downloadYn: Boolean): MutableList<PointExchange>
 }

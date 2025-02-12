@@ -1,27 +1,19 @@
 package tech.server.reviral.api.point.service
 
-import com.querydsl.jpa.impl.JPAQueryFactory
-import jakarta.persistence.Basic
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tech.server.reviral.api.account.model.entity.QUser
 import tech.server.reviral.api.account.repository.AccountRepository
-import tech.server.reviral.api.campaign.model.entity.QCampaign
-import tech.server.reviral.api.campaign.model.entity.QCampaignDetails
 import tech.server.reviral.api.point.model.dto.ExchangePointRequestDTO
 import tech.server.reviral.api.point.model.dto.PointAttributeResponseDTO
 import tech.server.reviral.api.point.model.entity.PointExchange
-import tech.server.reviral.api.point.model.entity.QPointAttribute
-import tech.server.reviral.api.point.model.entity.QPointExchange
 import tech.server.reviral.api.point.model.enums.ExchangeStatus
-import tech.server.reviral.api.point.model.enums.PointStatus
-import tech.server.reviral.api.point.repository.PointAttributeRepository
 import tech.server.reviral.api.point.repository.PointExchangeRepository
 import tech.server.reviral.api.point.repository.PointRepository
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.PointException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.response.exception.enums.PointError
+import tech.server.reviral.common.util.AESEncryption
 import java.time.LocalDateTime
 
 /**
@@ -38,10 +30,8 @@ import java.time.LocalDateTime
 @Service
 class PointService constructor(
     private val pointRepository: PointRepository,
-    private val pointAttributeRepository: PointAttributeRepository,
     private val pointExchangeRepository: PointExchangeRepository,
     private val accountRepository: AccountRepository,
-    private val queryFactory: JPAQueryFactory
 ) {
 
     /**
@@ -55,6 +45,10 @@ class PointService constructor(
 
         val user = accountRepository.findById(request.userId)
             .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+        if ( user?.userInfo?.bankCode == null || user.userInfo?.account == null ) {
+            throw PointException(PointError.ACCOUNT_IS_NULL)
+        }
 
         // 포인트 내역 조회
         val point = pointRepository.findByUser(user)
@@ -71,11 +65,11 @@ class PointService constructor(
             status = ExchangeStatus.REQ,
             pointValue = request.exchangeValue,
             exchangeDesc = ExchangeStatus.REQ.description(request.exchangeValue),
+            uniqueKey = AESEncryption.generatedUniqueKey(),
             createAt = LocalDateTime.now()
         ))
 
         point.remainPoint = point.remainPoint - request.exchangeValue
-        point.totalChangePoint = point.totalChangePoint + request.exchangeValue
         point.updateAt = LocalDateTime.now()
         this.pointRepository.save(point)
 
@@ -101,8 +95,8 @@ class PointService constructor(
         val pointExchange = pointExchangeRepository.findByUserOrderByCreateAt(user)
 
         val userInfo = PointAttributeResponseDTO.UserInfo(
-            name = user.name,
-            loginId = user.loginId,
+            name = user?.userInfo?.username,
+            loginId = user.email,
             expectPoint = point.expectPoint,
             totalPoint = point.totalChangePoint,
             remainPoint = point.remainPoint,
@@ -127,4 +121,5 @@ class PointService constructor(
             )
         }
     }
+
 }

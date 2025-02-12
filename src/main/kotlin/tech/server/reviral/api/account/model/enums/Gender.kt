@@ -12,5 +12,5 @@ package tech.server.reviral.api.account.model.enums
  * 2024-11-26        joy58       최초 생성
  */
 enum class Gender {
-    MAN,WOMEN
+    MAN, WOMEN
 }

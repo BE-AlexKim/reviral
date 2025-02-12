@@ -26,6 +26,8 @@ interface CampaignEnrollRepository: JpaRepository<CampaignEnroll, Long> {
 
     fun countByUserAndCampaign(user: User, campaign: Campaign): Int
 
-    fun findByUserAndCancelYn(user: User, cancelYn: Boolean): List<CampaignEnroll>?
+    fun findByUserAndCancelYn(user: User, cancelYn: Boolean): List<CampaignEnroll?>?
+
+    fun findByIdIn(campaignEnrollIds: List<Long>): List<CampaignEnroll?>
 
 }

@@ -25,6 +25,8 @@ enum class PointError(
     private val message: String
 ): ExceptionMessageInitializer {
 
+    POINT_PW_IS_NULL(HttpStatus.BAD_REQUEST,"PE0004", PointExceptionMessage.POINT_PW_IS_NULL),
+    ACCOUNT_IS_NULL(HttpStatus.BAD_REQUEST,"PE0003", PointExceptionMessage.ACCOUNT_IS_NULL),
     EXCHANGE_BETTER_THAN_REMAIN(HttpStatus.BAD_REQUEST, "PE0002", PointExceptionMessage.EXCHANGE_BETTER_THAN_REMAIN),
     POINT_IS_NOT_EXIST(HttpStatus.BAD_REQUEST, "PE0001", PointExceptionMessage.POINT_IS_NOT_EXIST);
 

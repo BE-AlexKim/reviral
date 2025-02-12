@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import tech.server.reviral.api.account.model.enums.Gender
+import tech.server.reviral.api.account.model.enums.Registration
 import tech.server.reviral.api.account.model.enums.UserRole
 import java.time.LocalDateTime
 
@@ -29,62 +30,46 @@ class User(
     @Comment("사용자 일련번호")
     val id: Long? = null,
 
-    @Column(name = "login_id", length = 30, nullable = false, unique = true)
-    @Comment("로그인 아이디")
-    val loginId: String,
-
-    @Column(name = "login_pw")
-    @Comment("비밀번호")
-    var loginPw: String,
-
-    @Column(name = "name")
-    @Comment("이름")
-    val name: String,
-
+    @Column(name = "provider", nullable = false, length = 10)
+    @Comment("소셜 가입 제공자")
     @Enumerated(EnumType.STRING)
-    @Column(name = "user_gender")
-    @Comment("성별")
-    val gender: Gender,
+    val registration: Registration,
 
-    @Column(name = "phone_number")
-    @Comment("휴대폰 번호")
-    var phone: String,
+    @Column(name = "user_sid")
+    @Comment("소셜 일련번호")
+    val sid: String? = null,
 
-    @Column(name = "address")
-    @Comment("주소")
-    var address: String,
+    @Column(name = "user_password")
+    @Comment("사용자 비밀번호")
+    var userPassword: String? = null,
 
-    @Column(name = "point_pw")
-    @Comment("포인트 전환 비밀번호")
-    var pointPw: String? = null,
+    @Column(name = "email", length = 30, nullable = false, unique = true)
+    @Comment("이메일")
+    var email: String? = null,
 
-    @Column(name = "bank_code")
-    @Comment("은행 코드")
-    var bankCode: String? = null,
-
-    @Column(name = "account_number")
-    @Comment("계좌 번호")
-    var account: String? = null,
+    @Column(name = "profile_image")
+    @Comment("프로필 이미지")
+    var profileImage: String? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role")
     @Comment("계정 권한")
     val auth: UserRole,
 
-    @Column(name = "nv_id")
-    @Comment("네이버 아이디")
-    var nvId: String? = null,
+    @Column(name = "access_token")
+    @Comment("소셜 제공 엑세스 토큰")
+    var accessToken: String? = null,
 
-    @Column(name = "cp_id")
-    @Comment("쿠팡 아이디")
-    var cpId: String? = null,
+    @Column(name = "refresh_token")
+    @Comment("소셜 제공 리프레시 토큰")
+    var refreshToken: String? = null,
 
     @Column(name = "is_event")
-    val isEvent: Boolean = false,
+    var isEvent: Boolean = false,
 
     @Column(name = "is_account_non_locked")
     @Comment("계정 잠김 유무")
-    val isUserNonLocked: Boolean = true,
+    var isUserNonLocked: Boolean = true,
 
     @Column(name = "is_credential_non_expired")
     @Comment("비밀번호 유효기간 만료 여부")
@@ -96,7 +81,16 @@ class User(
 
     @Column(name = "created_at")
     @Comment("최초 생성 일시")
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(name = "updated_at")
+    @Comment("최종 수정 일시")
+    var updatedAt: LocalDateTime? = null,
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "user_set_id")
+    @Comment("사용자 세팅정보")
+    var userInfo: UserInfo? = null,
 
 ): UserDetails {
 
@@ -104,12 +98,12 @@ class User(
         return mutableListOf(SimpleGrantedAuthority(auth.name))
     }
 
-    override fun getPassword(): String {
-        return loginPw
+    override fun getPassword(): String? {
+        return userInfo?.secondPassword
     }
 
     override fun getUsername(): String {
-        return loginId
+        return email!!
     }
     // 잠긴 계쩡 여부
     override fun isAccountNonLocked(): Boolean {

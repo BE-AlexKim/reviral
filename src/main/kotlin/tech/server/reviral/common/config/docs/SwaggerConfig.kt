@@ -51,8 +51,11 @@ class SwaggerConfig {
 
         return OpenAPI()
             .addServersItem(Server().url("http://localhost:9093"))
-            .addServersItem(Server().url("http://api-server.reviral.kr"))
+            .addServersItem(Server().url("http://localhost:9094"))
+            .addServersItem(Server().url("https://api-server.reviral.kr"))
             .addServersItem(Server().url("http://172.30.1.106:9093"))
+            .addServersItem(Server().url("http://192.168.0.4:3000"))
+            .addServersItem(Server().url("http://14.53.24.5"))
             .components(securityComponents())
             .addSecurityItem(securityRequirement)
             .info(apiInfo())

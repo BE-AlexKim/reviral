@@ -20,4 +20,6 @@ import tech.server.reviral.api.point.model.entity.Point
 interface PointRepository: JpaRepository<Point, Long> {
 
     fun findByUser(user: User): Point?
+
+    fun existsByUser(user: User): Boolean
 }

@@ -36,7 +36,7 @@ class CustomAccessDeniedHandler: AccessDeniedHandler {
         json["message"] = authError.getMessage()
         json["timestamp"] = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
-        response?.status = HttpStatus.UNAUTHORIZED.value()
+        response?.status = authError.getHttpStatus().value()
         response?.contentType = MediaType.APPLICATION_JSON_VALUE
         response?.characterEncoding = Charsets.UTF_8.toString()
         response?.writer?.print(json)

@@ -29,20 +29,20 @@ data class CampaignOptions(
     val campaign: Campaign? = null,
 
     @OneToMany(mappedBy="campaignOptions",fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-    val subOptions: List<CampaignSubOptions> = emptyList(),
+    val subOptions: List<CampaignSubOptions>? = null,
 
     @Column(name = "option_title")
-    val title: String,
+    var title: String,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "option_type")
-    val optionType: OptionType,
+    var optionType: OptionType,
 
     @Column(name = "recruit_count")
-    val recruitPeople: Int,
+    var recruitPeople: Int,
 
     @Column(name = "option_order")
-    val order: Int,
+    var order: Int,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

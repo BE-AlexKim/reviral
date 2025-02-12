@@ -1,5 +1,6 @@
 package tech.server.reviral.api.account.service
 
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -7,16 +8,20 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.account.model.dto.*
 import tech.server.reviral.api.account.model.entity.User
-import tech.server.reviral.api.account.model.enums.BankCode
+import tech.server.reviral.api.account.model.entity.UserInfo
+import tech.server.reviral.api.account.model.enums.Registration
 import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
-import tech.server.reviral.common.config.mail.EmailService
-import tech.server.reviral.common.config.mail.EmailTemplate
+import tech.server.reviral.api.account.repository.UserInfoRepository
+import tech.server.reviral.api.oauth.model.OAuthUserInfo
+import tech.server.reviral.api.point.model.entity.Point
+import tech.server.reviral.api.point.repository.PointRepository
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.security.JwtRedisRepository
 import tech.server.reviral.common.config.security.JwtToken
 import tech.server.reviral.common.config.security.JwtTokenProvider
+import java.time.LocalDateTime
 
 /**
  * packageName    : tech.server.reviral.api.account.service
@@ -36,25 +41,101 @@ class AccountService constructor(
     private val jwtTokenProvider: JwtTokenProvider,
     private val passwordEncoder: PasswordEncoder,
     private val jwtRedisRepository: JwtRedisRepository,
-    private val emailService: EmailService
+    private val userInfoRepository: UserInfoRepository,
+    private val pointRepository: PointRepository
 ) {
 
     @Transactional
     @Throws(BasicException::class)
-    fun loadUserByUsername(username: String?): User {
-        return accountRepository.findByLoginId(username)
-            ?: throw BasicException(BasicError.USER_NOT_EXIST)
+    fun loadUserByUsername( userId: Long ): User {
+        return accountRepository.findById(userId)
+            .orElseThrow{ throw BasicException(BasicError.USER_NOT_EXIST) }
     }
 
-    /**
-     * 아이디 중복체크 서비스
-     * @param loginId
-     * @return Boolean
-     */
     @Transactional
     @Throws(BasicException::class)
-    fun isLoginIdDuplicated(loginId: String): Boolean {
-        return accountRepository.existsUserByLoginId(loginId)
+    fun signup(request: OAuthUserInfo, registration: Registration, accessToken: String, refreshToken: String): JwtToken {
+
+        val isExistUser = accountRepository.existsBySidAndRegistration(request.getSid(), registration)
+
+        if ( !isExistUser ) {
+            val newUser = this.accountRepository.save(
+                User(
+                    email = request.getEmail(),
+                    registration = request.getProvider(),
+                    profileImage = request.getThumbnailImage(),
+                    sid = request.getSid(),
+                    auth = UserRole.ROLE_REVIEWER,
+                    userPassword = passwordEncoder.encode(accessToken),
+                    accessToken = accessToken,
+                    refreshToken = refreshToken
+                )
+            )
+
+            this.pointRepository.save(
+                Point(
+                    user = newUser,
+                    remainPoint = 0,
+                    expectPoint = 0,
+                    totalChangePoint = 0,
+                    createAt = LocalDateTime.now()
+                )
+            )
+
+            val authenticationToken = UsernamePasswordAuthenticationToken( newUser.id, accessToken )
+
+            val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
+
+            val account = authentication.principal as User
+
+            return jwtTokenProvider.getJwtToken(account)
+
+        }else {
+            val user = accountRepository.findBySidAndRegistration(request.getSid(), registration)
+
+            user.userPassword = passwordEncoder.encode(accessToken)
+            user.profileImage = request.getThumbnailImage()
+            user.email = request.getEmail()
+            user.accessToken = accessToken
+            user.refreshToken = refreshToken
+            user.updatedAt = LocalDateTime.now()
+
+            val authenticationToken = UsernamePasswordAuthenticationToken( user.id, accessToken )
+
+            val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
+
+            val account = authentication.principal as User
+
+            return jwtTokenProvider.getJwtToken(account)
+        }
+    }
+
+    @Transactional
+    @Throws(BasicException::class)
+    fun setBasicUserInfo( request: BasicUserInfoRequestDTO ): Boolean {
+
+        val user = accountRepository.findById(request.userId)
+            .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+        user.isEvent = request.isEvent
+        accountRepository.save(user)
+
+        val userInfo = if ( userInfoRepository.existsByUser(user) ) {
+            this.userInfoRepository.findByUser(user)
+        }else {
+            this.userInfoRepository.save(UserInfo(
+                user = user,
+                secondPassword = passwordEncoder.encode(request.password),
+                username = request.name,
+                gender = request.gender,
+                phone = request.phoneNumber.replace("-","").trim(),
+            ))
+        }
+
+        user.userInfo = userInfo
+        this.accountRepository.save(user)
+
+        return true
     }
 
     /**
@@ -66,119 +147,21 @@ class AccountService constructor(
     @Transactional
     @Throws(BasicException::class)
     fun getUserInfo(userId: Long): UserInfoResponseDTO {
+
         val user = accountRepository.findById(userId)
             .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
-        val phoneRegex = Regex("(\\d{3})(\\d{4})(\\d{4})")
-
-        val phoneNumber = phoneRegex.replace(user.phone) { matchResult ->
-            val ( part1, part2, part3 ) = matchResult.destructured
-            "${part1}-${part2}-${part3[0]}***"
-        }
-
-        val accountNumber = user.account?.substring(0, user.account?.lastIndex?.minus(4) ?: 0)
-        accountNumber?.plus("*".repeat(5))
-
-        val bankName = BankCode.values().first { it.getBankCode() == user.bankCode }.getBankName()
-
         return UserInfoResponseDTO(
-            name = user.name,
-            loginId = user.loginId,
-            nvId = user.nvId,
-            cpId = user.cpId,
-            phoneNumber = phoneNumber,
-            address = user.address,
-            bankCode = bankName,
-            accountNumber = accountNumber
+            name = user.userInfo?.username,
+            loginId = user.email!!,
+            nvId = user.userInfo?.nvId,
+            cpId = user.userInfo?.cpId,
+            phoneNumber = user.userInfo?.phone,
+            address = user.userInfo?.address,
+            bankCode = user.userInfo?.bankCode,
+            accountNumber = user?.userInfo?.account,
+            profileImage = user.profileImage ?: ""
         )
-    }
-
-    /**
-     * 로그인 서비스
-     * @param request SignInRequestDTO
-     * @return JwtToken
-     */
-    @Transactional
-    @Throws(Exception::class)
-    fun signIn(request: SignInRequestDTO): JwtToken {
-        // UsernamePasswordAuthenticationToken 발급
-        val authenticationToken = UsernamePasswordAuthenticationToken(request.loginId, request.password )
-        // 인증 객체 생성
-        val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
-        // 인증 객체에서 사용자 정보 객체로 변환
-        val user = authentication.principal as User
-        // 사용자 정보 객체로 변환 후, 토큰 생성
-        return jwtTokenProvider.getJwtToken(user)
-    }
-
-    @Transactional
-    @Throws(BasicException::class)
-    fun signInToAdmin(request: SignInRequestDTO): JwtToken {
-        // UsernamePasswordAuthenticationToken 발급
-        val authenticationToken = UsernamePasswordAuthenticationToken(request.loginId, request.password )
-        // 인증 객체 생성
-        val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
-        // 인증 객체에서 사용자 정보 객체로 변환
-        val user = authentication.principal as User
-
-        if ( user.auth != UserRole.ROLE_ADMIN ) {
-            throw BasicException(BasicError.AUTH_NOT_ADMIN)
-        }
-        // 사용자 정보 객체로 변환 후, 토큰 생성
-        return jwtTokenProvider.getJwtToken(user)
-    }
-
-    /**
-     * 인증코드 발송
-     * @param request: EmailAuthorizedRequestDTO
-     * @return Boolean
-     * @exception RuntimeException
-     */
-    @Transactional
-    @Throws(RuntimeException::class)
-    fun sendAuthorizedToEmail( type: String, request: EmailAuthorizedRequestDTO ): Boolean {
-
-        if ( EmailTemplate.values().none { it.name == type.uppercase() } ) {
-            throw BasicException(BasicError.UNSUPPORTED_URL)
-        }
-
-        val emailTemplate = EmailTemplate.valueOf(type.uppercase())
-
-        // 템플릿 Context 변수 설정
-        val values = emailTemplate.values(request.email)
-        // 이메일 전송
-        emailService.send(request.email, emailTemplate.getSubject(), emailTemplate.template(), values)
-        // Redis 저장
-        jwtRedisRepository.setAuthorizationCode("${emailTemplate.name}_${request.email}",  values["code"]!!, 300000)
-
-        return true
-    }
-
-    /**
-     * 인증코드 검사
-     * @param request: AuthorizeCodeRequestDTO
-     * @return Boolean
-     * @exception BasicException
-     */
-    @Transactional
-    @Throws(BasicException::class)
-    fun verifyAuthorizedEmailCode(type: String, request: AuthorizeCodeRequestDTO ): Boolean {
-
-        if ( EmailTemplate.values().none { it.name == type.uppercase() } ) {
-            throw BasicException(BasicError.UNSUPPORTED_URL)
-        }
-
-        val emailTemplate = EmailTemplate.valueOf(type.uppercase())
-
-        val code = jwtRedisRepository.getAuthorizationCode("${emailTemplate.name}_${request.email}")
-            ?: throw BasicException(BasicError.AUTHORIZED_EMAIL)
-
-        return if ( code != request.code ) {
-            false
-        }else {
-            jwtRedisRepository.deleteAuthorizationCode("${emailTemplate.name}_${request.email}")
-            true
-        }
     }
 
     /**
@@ -192,36 +175,6 @@ class AccountService constructor(
     }
 
     /**
-     * 리뷰어 회원가입 서비스
-     * @param request: SignUpRequestDTO
-     * @return Boolean
-     */
-    @Transactional
-    @Throws(Exception::class)
-    fun signUp( request: SignUpRequestDTO ): Boolean {
-
-        if ( !isLoginIdDuplicated(request.loginId) ) { // 중복아이디가 존재하지 않을 경우
-            accountRepository.save(
-                User(
-                    loginId = request.loginId,
-                    loginPw = passwordEncoder.encode(request.loginPw),
-                    gender = request.gender,
-                    name = request.username,
-                    address = request.address,
-                    phone = request.phoneNumber,
-                    auth = UserRole.ROLE_REVIEWER,
-                    nvId = request.nvId,
-                    cpId = request.cpId,
-                    isEvent = request.isEvent
-                )
-            )
-            return true
-        }else {
-            throw BasicException(BasicError.USER_ALREADY_EXIST)
-        }
-    }
-
-    /**
      * 사용자 개인정보 업데이트 서비스
      * @param request: UpdateUserInfoRequestDTO
      * @return Boolean 업데이트 유무
@@ -229,47 +182,42 @@ class AccountService constructor(
      */
     @Transactional
     @Throws(BasicException::class)
-    fun updateUserInfo(request: UpdateUserInfoRequestDTO): Boolean {
-        val user = accountRepository.findById(request.userId)
+    fun setUserInfo(request: UpdateUserInfoRequestDTO, userId: Long): Boolean {
+
+        val user = accountRepository.findById(userId)
             .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
-        request.phoneNumber?.let { user.phone = it }
-        request.address?.let { user.address = it }
-        request.bankCode?.let { user.bankCode = it }
-        request.accountNumber?.let { user.account = it }
-        request.nvId?.let { user.nvId = it }
-        request.cpId?.let { user.cpId = it }
-        request.loginPw?.let { user.loginPw = passwordEncoder.encode(it) }
-        request.pointPw?.let { user.pointPw = passwordEncoder.encode(it) }
+        request.phoneNumber?.let { user?.userInfo?.phone = it }
+        request.address?.let { user?.userInfo?.address = it }
+        request.bankCode?.let { user?.userInfo?.bankCode = it }
+        request.accountNumber?.let { user?.userInfo?.account = it }
+        request.nvId?.let { user?.userInfo?.nvId = it }
+        request.cpId?.let { user?.userInfo?.cpId = it }
+        request.password?.let { user?.userInfo?.secondPassword = passwordEncoder.encode(it) }
+        user?.userInfo?.updatedAt = LocalDateTime.now()
 
         accountRepository.save(user)
+
         return true
     }
 
     /**
-     * 비밀번호 검증 서비스
+     * 2차 비밀번호 검증 서비스
      * @param request: ValidationPasswordRequestDTO
      * @return 비밀번호 검증여부
      * @exception BasicException
      */
     @Transactional
     @Throws(BasicException::class)
-    fun isValidPassword(request: ValidationPasswordRequestDTO, type: String): Boolean {
+    fun isValidPassword(request: ValidPasswordRequestDTO): Boolean {
+
         val user = accountRepository.findById(request.userId)
             .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
 
-        return when(type) {
-            "login" -> {
-                passwordEncoder.matches(request.password, user.password)
-            }
-            "point" -> {
-                val pointPw = user.pointPw
-                    ?: throw BasicException(BasicError.POINT_PASSWORD_SET)
+        val secondPassword = user.userInfo?.secondPassword
+            ?: throw BasicException(BasicError.SECONDARY_PASSWORD_SET)
 
-                passwordEncoder.matches(request.password, pointPw)
-            }
-            else -> throw BasicException(BasicError.UNSUPPORTED_URL)
-        }
+        return passwordEncoder.matches(request.password, secondPassword)
     }
 
     /**
@@ -286,13 +234,30 @@ class AccountService constructor(
 
         val claim = jwtTokenProvider.getClaim(request.refreshToken)
 
-        if (userId == claim.sub && claim.iss == "Reviral") { // 재발급 토큰 비교값이 동일할 경우
-            val username = claim.username
-            val token = jwtTokenProvider.getJwtToken(loadUserByUsername(username))
+        if (userId == claim.sub) { // 재발급 토큰 비교값이 동일할 경우
+            val token = jwtTokenProvider.getJwtToken(loadUserByUsername(userId.toLong()))
             jwtRedisRepository.delete(request.refreshToken)
             return token
         }else {
             throw BasicException(BasicError.TOKEN_NOT_MATCH)
+        }
+    }
+
+    @Transactional
+    @Throws(BasicException::class)
+    fun hasUserInfo(request: HttpServletRequest): Boolean {
+        val hasToken = jwtTokenProvider.extractToken(request)
+        if ( hasToken.isEmpty ) {
+            throw BasicException(BasicError.UNAUTHORIZED)
+        }else {
+            val hasClaims = jwtTokenProvider.decryptClaims(hasToken.get())
+
+            val userId = hasClaims.get().subject.toLong()
+
+            val user = accountRepository.findById(userId)
+                .orElseThrow { throw BasicException(BasicError.USER_NOT_EXIST) }
+
+            return userInfoRepository.existsByUser(user)
         }
     }
 
