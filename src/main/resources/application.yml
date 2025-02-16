@@ -35,17 +35,6 @@ spring:
       resolve-lazily: true
       max-file-size: 5MB
       max-request-size: 10MB
-## AWS S3
-cloud:
-  aws:
-    s3:
-      bucket: reviral
-    credentials:
-      access-key: AKIAZPPF77WAX7CPGPUG
-      secret-key: 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
-    region:
-      static: ap-northeast-2
-    stack:
-      auto: false
+
 logging:
   config: classpath:log/logger-${spring.profiles.active}.xml
