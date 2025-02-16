@@ -38,15 +38,6 @@ class JwtAuthenticationFilter(
             return
         }else {
             val token = isToken.get()
-//            val claims = jwtTokenProvider.decryptClaims(token)
-//            if (claims.isPresent) {
-//                val claim = claims.get()
-//                val hasUserInfo = claim["hasUserInfo"] as Boolean
-//                if ( !hasUserInfo ) {
-//                    response.sendRedirect("/api/v1/users/info/verify?userId=${claim.subject}")
-//                    return
-//                }
-//            }
             val enableAccessToken = jwtTokenProvider.validateToken(request, token)
             SecurityContextHolder.getContext().authentication = enableAccessToken
             filterChain.doFilter(request, response)

@@ -1,5 +1,6 @@
 package tech.server.reviral.api.campaign.model.dto
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import io.swagger.v3.oas.annotations.media.Schema
 import tech.server.reviral.api.campaign.model.enums.CampaignCategory
 import tech.server.reviral.api.campaign.model.enums.CampaignPlatform
@@ -67,10 +68,44 @@ data class SaveCampaignRequestDTO(
     @Schema(description = "셀러 모집글", required = true)
     val sellerRequest: String,
 
-    @Schema(description = "셀러 구매가이드", required = true)
-    val sellerGuide: String
+    @Schema(description = "쿠팡 와우회원 여부", required = false)
+    val cpType: Boolean = false,
 
-) {
+    @Schema(description = "주말 미포함 여부", required = false)
+    val isNotWorkDay: Boolean = true,
+
+//    @Schema(description = "구매 옵션1", required = true)
+//    val firstOption: String,
+//
+//    @Schema(description = "구매 옵션2", required = false)
+//    val secondOption: String? = null,
+
+//    @Schema(description = "구매 수량", required = false)
+//    @JsonAlias("count")
+//    val paymentCount: String = "1",
+
+    @Schema(description = "글자 수", required = false)
+    val textLength: String? = null,
+
+    @Schema(description = "강조 내용1", required = false)
+    val firstStrengthText: String? = null,
+
+    @Schema(description = "강조 내용2", required = false)
+    val secondStrengthText: String? = null,
+
+    @Schema(description = "강조 내용3", required = false)
+    val thirdStrengthText: String? = null,
+
+    @Schema(description = "강조 내용4", required = false)
+    val forthStrengthText: String? = null,
+
+    @Schema(description = "등록 조건", required = false)
+    val condition: String? = null,
+
+    @Schema(description = "기타 사항", required = false)
+    val etcText: String? = null,
+
+    ) {
     @Schema(name = "상품 옵션")
     data class Options(
         @Schema(description = "옵션명", example = "털모자")

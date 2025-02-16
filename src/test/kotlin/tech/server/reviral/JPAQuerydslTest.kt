@@ -29,8 +29,11 @@ import tech.server.reviral.common.config.mail.EmailService
 import tech.server.reviral.common.config.message.MessageService
 import tech.server.reviral.api.oauth.service.OAuthService
 import tech.server.reviral.common.config.response.exception.CampaignException
+import tech.server.reviral.common.config.response.exception.enums.CampaignError
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 /**
  *packageName    : tech.server.reviral
@@ -74,11 +77,76 @@ class JPAQuerydslTest(
     fun sendCampaignStart() {
         val campaign = campaignRepository.findById(24)
             .orElseThrow { throw CampaignException("오류") }
+    }
 
-        val phones = listOf("010")
+    @Test
+    fun workDays() {
+        val startDate = LocalDate.parse("2025-02-14")
+        val endDate = LocalDate.parse("2025-02-15")
 
-//        messageService.sendCampaignStart(campaign,phones)
-        messageService.sendCampaignGuides(campaign, phones)
+        val isNotWorkDay = true
+
+        val endDays = if ( isNotWorkDay ) {
+            adjustToNearestWeekDay(endDate)
+        }else {
+            endDate
+        }
+
+        val daysToAdd = getLocalDateBetween(startDate,endDays, isNotWorkDay)
+        println("DAY TO ADD :::::: $daysToAdd")
+
+        val workDays = getWorkDay(startDate,daysToAdd, isNotWorkDay)
+        println("WORKING DAY ::::: $workDays")
+    }
+
+    fun getWorkDay(startDate: LocalDate, targetWorkDays: Long, isNotWorkDay: Boolean): List<LocalDate> {
+        val dayList = mutableListOf<LocalDate>()
+        var date = startDate
+        var workDayCount = 0L
+
+        if ( isNotWorkDay ) {
+            while (workDayCount < targetWorkDays) {
+                if (date.dayOfWeek !in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) {
+                    dayList.add(date)
+                    workDayCount++
+                }
+                date = date.plusDays(1) // 하루 증가
+            }
+        }else {
+            (workDayCount..targetWorkDays).forEach { i ->
+                dayList.add(date.plusDays(i))
+            }
+        }
+        return dayList
+    }
+
+    private fun getLocalDateBetween(startDate: LocalDate, endDate: LocalDate, isNotWorkDay: Boolean): Long {
+        if (startDate.isAfter(endDate)) {
+            throw IllegalArgumentException("The start date must be before the end date.")
+        }
+
+        return if (isNotWorkDay) {
+            var date = startDate
+            var workDays = 0L
+
+            while (!date.isAfter(endDate)) { // Iterate through dates
+                if (date.dayOfWeek !in listOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)) {
+                    workDays++
+                }
+                date = date.plusDays(1) // Increment day
+            }
+            workDays
+        } else {
+            ChronoUnit.DAYS.between(startDate, endDate) // Include weekends
+        }
+    }
+
+    private fun adjustToNearestWeekDay(date: LocalDate): LocalDate {
+        return when ( date.dayOfWeek ) {
+            DayOfWeek.SATURDAY -> date.plusDays(2)
+            DayOfWeek.SUNDAY -> date.plusDays(1)
+            else -> date
+        }
     }
 
 }

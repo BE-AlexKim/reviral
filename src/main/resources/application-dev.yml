@@ -1,6 +1,5 @@
 server:
   port: 9093
-  domain: http://172.30.1.68:9093
 
 spring:
   config:
@@ -60,7 +59,7 @@ spring:
         http://localhost:9093,
         https://14.53.24.5:9093,
         https://172.30.1.68:9093,
-        http://172.30.1.112:9093,
+        http://172.30.1.109:9093,
         http://172.30.1.106:3000,
         http://172.30.1.106:3001,
         https://reviral.vercel.app,

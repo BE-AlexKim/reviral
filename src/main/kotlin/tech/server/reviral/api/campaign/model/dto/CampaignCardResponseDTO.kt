@@ -42,5 +42,7 @@ data class CampaignCardResponseDTO(
     @Schema(description = "오픈 날짜")
     val applyDate: LocalDate? = null,
     @Schema(description = "캠페인 상세 상태")
-    val sellerStatus: SellerStatus? = null
+    val sellerStatus: SellerStatus? = null,
+    @Schema(description = "와우 회원전용")
+    val cpType: Boolean? = false,
 )

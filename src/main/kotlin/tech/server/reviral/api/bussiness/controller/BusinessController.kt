@@ -9,16 +9,12 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import tech.server.reviral.api.account.model.dto.SignInRequestDTO
-import tech.server.reviral.api.bussiness.model.dto.AccountResultDTO
-import tech.server.reviral.api.bussiness.model.dto.AdminSignupRequestDTO
-import tech.server.reviral.api.bussiness.model.dto.PointExchangeIdsRequestDTO
+import tech.server.reviral.api.bussiness.model.dto.*
 import tech.server.reviral.api.bussiness.model.enums.ImageCheck
 import tech.server.reviral.api.bussiness.service.BusinessService
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.point.model.dto.PointExchangeResponseDTO
-import tech.server.reviral.common.config.docs.bussiness.TransferCompleteExplain
-import tech.server.reviral.common.config.docs.bussiness.TransferExplain
-import tech.server.reviral.common.config.docs.bussiness.TransferResultExplain
+import tech.server.reviral.common.config.docs.bussiness.*
 import tech.server.reviral.common.config.docs.campaign.*
 import tech.server.reviral.common.config.response.success.WrapResponseEntity
 import tech.server.reviral.common.config.security.JwtToken
@@ -84,7 +80,10 @@ class BusinessController constructor(
      * @return Boolean
      */
     @Tag(name = "어드민 캠페인 API")
-    @PostMapping("/campaign", consumes = [MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PostMapping(
+        "/campaign",
+        consumes = [MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
     @SaveCampaignExplain
     fun setCampaign(
         @RequestPart("images") images: List<MultipartFile> = emptyList(),
@@ -186,6 +185,26 @@ class BusinessController constructor(
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "campaign", campaign)
     }
 
+    @Tag(name = "어드민 캠페인 API")
+    @PostMapping("/campaign/add")
+    @AddCampaignDetailExplain
+    fun addCampaignDetails(
+        @RequestBody request: AddCampaignDetailRequestDTO,
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val add = businessService.addToCampaignDetail(request)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "isAdded", add)
+    }
+
+    @Tag(name = "어드민 캠페인 API")
+    @DeleteMapping("/campaign/add")
+    @DeleteCampaignDetailExplain
+    fun deleteCampaignDetail(
+        @RequestParam campaignDetailsId: Long,
+    ): ResponseEntity<WrapResponseEntity<Boolean>> {
+        val delete = businessService.deleteCampaignDetail(campaignDetailsId)
+        return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"isDeleted", delete)
+    }
+
     @Tag(name = "어드민 포인트 API")
     @GetMapping("/point/transfer")
     @TransferExplain
@@ -210,18 +229,6 @@ class BusinessController constructor(
         return WrapResponseEntity.toResponseEntity(HttpStatus.OK,"isExchange", isExchange)
     }
 
-    @Tag(name = "어드민 계정 API")
-    @PostMapping("/signup")
-    fun signup(@RequestBody request: AdminSignupRequestDTO): ResponseEntity<WrapResponseEntity<Boolean>> {
-        val signup = businessService.signup(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "signup", signup)
-    }
 
-    @Tag(name = "어드민 계정 API")
-    @PostMapping("/sign-in")
-    fun login(@RequestBody request: SignInRequestDTO): ResponseEntity<WrapResponseEntity<JwtToken>> {
-        val login = businessService.login(request)
-        return WrapResponseEntity.toResponseEntity(HttpStatus.OK, "jwt", login)
-    }
 
 }

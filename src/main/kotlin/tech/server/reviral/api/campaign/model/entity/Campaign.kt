@@ -94,6 +94,10 @@ data class Campaign(
     @Comment("리뷰 가격")
     var reviewPoint: Int,
 
+    @Column(name = "cp_type")
+    @Comment("쿠팡 와우회원 여부")
+    val cpType: Boolean = false,
+
     @Column(name = "active_date")
     @Comment("활성화 시간")
     var activeDate: LocalDate,
@@ -109,13 +113,17 @@ data class Campaign(
     @Column(name = "duplicated_date")
     val duplicatedDate: Long? = null,
 
+    @Column(name = "is_workday")
+    @Comment("주말 포함여부 true(미포함)/ false(포함)")
+    val isNotWorkDay: Boolean = true,
+
     @Column(name = "seller_request", columnDefinition = "TEXT")
     @Comment("셀리 모집글")
     var sellerRequest: String,
 
-    @Column(name = "seller_guide", columnDefinition = "TEXT")
-    @Comment("구매 가이드")
-    var sellerGuide: String? = null,
+//    @Column(name = "seller_guide", columnDefinition = "TEXT")
+//    @Comment("구매 가이드")
+//    var sellerGuide: String? = null,
 
     @Column(name = "create_at")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -136,6 +144,9 @@ data class Campaign(
     @OneToMany(mappedBy = "campaign", fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     var subOptions: MutableList<CampaignSubOptions>? = null,
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @JoinColumn(name = "guide_id")
+    var guide: CampaignGuide? = null
 
     ) {
     override fun equals(other: Any?): Boolean {

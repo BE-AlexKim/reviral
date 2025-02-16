@@ -91,6 +91,7 @@ class CampaignService constructor(
                     qCampaign.campaignPrice.`as`("campaignPrice"),
                     qCampaignDetails.joinCount.`as`("joinCount"),
                     qCampaignDetails.applyDate.`as`("applyDate"),
+                    qCampaign.cpType.`as`("cpType")
                 )
             )
             .from(qCampaign)
@@ -190,7 +191,7 @@ class CampaignService constructor(
      */
     @Transactional
     @Throws(CampaignException::class)
-    fun getCampaign(campaignDetailsId: Long): CampaignDetailResponseDTO {
+    fun getCampaignDetail(campaignDetailsId: Long): CampaignDetailResponseDTO {
 
         val qCampaign = QCampaign.campaign
         val qCampaignDetails = QCampaignDetails.campaignDetails
@@ -211,6 +212,7 @@ class CampaignService constructor(
                     qCampaign.sellerRequest.`as`("sellerRequest"),
                     qCampaignDetails.recruitCount.`as`("totalCount"),
                     qCampaignDetails.joinCount.`as`("joinCount"),
+                    qCampaign.cpType.`as`("cpType"),
                     Projections.list(
                         Projections.constructor(
                             CampaignDetailResponseDTO.Options::class.java,
@@ -259,6 +261,7 @@ class CampaignService constructor(
                     sellerRequest = campaign.sellerRequest,
                     totalCount = campaign.totalCount,
                     joinCount = campaign.joinCount,
+                    cpType = campaign.cpType,
                     options = campaigns.flatMap { it.options }
                         .groupBy { it!!.campaignOptionsId }
                         .map { (_, options) ->
@@ -296,6 +299,10 @@ class CampaignService constructor(
         // 캠페인 상세정보가 아직 게시전이라면
         if ( campaignDetails.sellerStatus == SellerStatus.WAIT ) {
             throw CampaignException(CampaignError.CAMPAIGN_STATUS_WAIT)
+        }
+
+        if ( campaignDetails.sellerStatus == SellerStatus.PROGRESS ) {
+            throw CampaignException(CampaignError.CAMPAIGN_STATUS_PROGRESS)
         }
 
         // 캠페인 정보 조회
@@ -459,7 +466,13 @@ class CampaignService constructor(
                 campaignImgUrl = it?.campaign?.campaignImgUrl,
                 campaignTitle = it?.campaign?.campaignTitle,
                 campaignLink = it?.campaign?.campaignUrl,
-                sellerGuide = it?.campaign?.sellerGuide,
+                sellerGuide =
+                "<p> 옵션 1 : ${it?.options?.title ?: "없음" }</p>"+
+                "<p> 옵션 2 : ${it?.subOptions?.title ?: "없음" }</p><br><br>"+
+                "<p> 1. 글자 제한: ${it?.campaign?.guide?.textLength ?: "없음"}</p>" +
+                "<p> 2. 등록 조건: ${it?.campaign?.guide?.condition ?: "없음"}</p>" +
+                "<p> 3. 기타 사항: ${it?.campaign?.guide?.etcText ?: "없음"}</p> <br>" +
+                "<p> 4. 강조 내용 <br>${it?.campaign?.guide?.strengthText ?: "없음"}</p>",
                 orderStatus = it?.orderStatus,
                 reviewStatus = it?.reviewStatus
             )

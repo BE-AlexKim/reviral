@@ -1,9 +1,12 @@
 package tech.server.reviral.api.account.repository
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import tech.server.reviral.api.account.model.entity.User
 import tech.server.reviral.api.account.model.enums.Registration
+import tech.server.reviral.api.account.model.enums.UserRole
 
 /**
  *packageName    : tech.server.reviral.api.account.repository
@@ -28,5 +31,7 @@ interface AccountRepository: JpaRepository<User, Long> {
     fun existsBySidAndRegistration(sid: String, registration: Registration): Boolean
 
     fun existsBySid(sid: String): Boolean
+
+    fun findByAuth(auth: UserRole, pageable: Pageable): Page<User>
 
 }

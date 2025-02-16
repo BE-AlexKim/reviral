@@ -36,6 +36,8 @@ data class CampaignDetailResponseDTO(
     val totalCount: Long = 0,
     @Schema(description = "캠페인 참여인원")
     val joinCount: Long = 0,
+    @Schema(description = "와우 회원전용 유무")
+    val cpType: Boolean = false,
     @Schema(description = "옵션")
     var options: List<Options?> = listOf()
 ) {

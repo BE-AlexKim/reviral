@@ -23,6 +23,9 @@ enum class CampaignError(
     private val code: String,
     private val message: String
 ): ExceptionMessageInitializer {
+    CAMPAIGN_EXIST_JOIN_PEOPLE(HttpStatus.BAD_REQUEST,"CP0024",CampaignExceptionMessage.CAMPAIGN_EXIST_JOIN_PEOPLE),
+    CAMPAIGN_DO_NOT_DELETE(HttpStatus.BAD_REQUEST,"CP0023", CampaignExceptionMessage.CAMPAIGN_DO_NOT_DELETE),
+    CAMPAIGN_STATUS_PROGRESS(HttpStatus.BAD_REQUEST, "CP0022", CampaignExceptionMessage.CAMPAIGN_STATUS_PROGRESS),
     CAMPAIGN_MODIFY_IMPOSSIBLE(HttpStatus.BAD_REQUEST, "CP0021", CampaignExceptionMessage.CAMPAIGN_MODIFY_IMPOSSIBLE),
     CAMPAIGN_ENROLL_NOT_MATCH(HttpStatus.BAD_REQUEST, "CP0020", CampaignExceptionMessage.CAMPAIGN_ENROLL_NOT_MATCH),
     CAMPAIGN_STATUS_NOT_WAIT(HttpStatus.BAD_REQUEST,"CP0019", CampaignExceptionMessage.CAMPAIGN_STATUS_NOT_WAIT),

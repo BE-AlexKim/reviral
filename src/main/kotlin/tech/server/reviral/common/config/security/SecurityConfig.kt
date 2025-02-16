@@ -94,9 +94,26 @@ class SecurityConfig(
 
             it.requestMatchers(
                 HttpMethod.GET,
+                "/api/v1/business/reviewers",
                 "/api/v1/business/campaigns",
                 "/api/v1/business/campaigns"
             ).hasAuthority("ROLE_ADMIN")
+
+            it.requestMatchers(
+                HttpMethod.POST,
+                "/api/v1/business/campaign/add",
+                "/api/v1/business/campaign/add"
+            ).hasAuthority("ROLE_ADMIN")
+
+            it.requestMatchers(
+                HttpMethod.DELETE,
+                "/api/v1/business/campaign/add"
+            ).hasAuthority("ROLE_ADMIN")
+
+            it.requestMatchers(
+                HttpMethod.GET,
+                "/","/campaign/register","user","/campaign"
+            ).permitAll()
 
             // Resource And OAuth Permit
             it.requestMatchers(
@@ -106,8 +123,11 @@ class SecurityConfig(
                 "/swagger-ui/**/*",
                 "/webjars/**",
                 "/v3/api-docs/**",
-                "/swagger-resources/**"
+                "/swagger-resources/**",
+                "/static/images/**",
+                "/static/css"
             ).permitAll()
+
             it.anyRequest().authenticated()
         }
 

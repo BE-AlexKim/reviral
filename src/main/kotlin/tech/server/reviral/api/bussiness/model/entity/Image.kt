@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.persistence.*
 import org.hibernate.annotations.Comment
 import tech.server.reviral.api.bussiness.model.enums.ImageCategory
+import tech.server.reviral.api.bussiness.repository.PaymentGuide
 import java.time.LocalDateTime
 
 /**

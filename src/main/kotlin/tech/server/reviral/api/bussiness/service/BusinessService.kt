@@ -8,22 +8,13 @@ import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.account.model.entity.QUser
 import tech.server.reviral.api.account.model.entity.QUserInfo
-import tech.server.reviral.api.account.model.entity.User
-import tech.server.reviral.api.account.model.enums.Registration
-import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
-import tech.server.reviral.api.bussiness.model.dto.AccountResultDTO
-import tech.server.reviral.api.bussiness.model.dto.AdminSignupRequestDTO
-import tech.server.reviral.api.bussiness.model.dto.PointExchangeIdsRequestDTO
+import tech.server.reviral.api.bussiness.model.dto.*
 import tech.server.reviral.api.bussiness.model.enums.ImageCheck
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.campaign.model.entity.*
@@ -43,14 +34,12 @@ import tech.server.reviral.common.config.response.exception.PointException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.response.exception.enums.CampaignError
 import tech.server.reviral.common.config.response.exception.enums.PointError
-import tech.server.reviral.common.config.security.JwtToken
-import tech.server.reviral.common.config.security.JwtTokenProvider
+import tech.server.reviral.common.util.DateUtil
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
 
 /**
  *packageName    : tech.server.reviral.api.bussiness.service
@@ -75,10 +64,8 @@ class BusinessService constructor(
     private val accountRepository: AccountRepository,
     private val amazonS3Service: AmazonS3Service,
     private val pointExchangeRepository: PointExchangeRepository,
-    private val passwordEncoder: PasswordEncoder,
-    private val jwtTokenProvider: JwtTokenProvider,
-    private val authenticationManagerBuilder: AuthenticationManagerBuilder,
-    private val messageService: MessageService
+    private val messageService: MessageService,
+    private val campaignGuideRepository: CampaignGuideRepository
 ){
 
     @Value("\${encrypt.aes.secret-key}")
@@ -170,7 +157,10 @@ class BusinessService constructor(
             )
             .from(qCampaign)
             .join(qCampaignDetails).on(qCampaign.eq(qCampaignDetails.campaign))
-            .where(booleanBuilder) // 조건 적용
+            .where(
+                booleanBuilder
+                .and(!qCampaignDetails.isDelete)
+            ) // 조건 적용
             .groupBy(qCampaign.id)
             .orderBy(*orderSpecifiers.toTypedArray()) // 정렬 적용
             .offset(offset)
@@ -226,25 +216,44 @@ class BusinessService constructor(
             activeDate = request.startSaleDateTime,
             finishDate = request.endSaleDateTime,
             sellerRequest = request.sellerRequest,
-            sellerGuide = request.sellerGuide,
             dailyRecruitCount = dailyRecruitCount.toLong(),
             startTime = request.startTime,
-            endTime = request.endTime
+            endTime = request.endTime,
+            cpType = request.cpType,
+            isNotWorkDay = request.isNotWorkDay
         )
-        campaignRepository.save(campaign)
 
-        // 캠페인 진행 날짜별 데이터 등록
-        val now = LocalDate.now()
-        val campaignDetails = (1 .. activeCount).map { i ->
+        val strengthText = listOfNotNull(
+            request.firstStrengthText,
+            request.secondStrengthText,
+            request.thirdStrengthText,
+            request.forthStrengthText
+        ).mapIndexed { i, v ->
+            "$i.$v"
+        }.joinToString("\n")
+
+        campaign.guide =  this.campaignGuideRepository.save(CampaignGuide(
+            campaign = campaign,
+            guideType = GuideType.PAYMENT,
+            textLength = request.textLength,
+            strengthText = strengthText,
+            condition = request.condition,
+            etcText = request.etcText
+        ))
+
+        // 진행일자 생성
+        val activeDays = DateUtil().getWorkDays(request.startSaleDateTime,request.endSaleDateTime, request.isNotWorkDay)
+
+        val campaignDetails = activeDays.mapIndexed { i,v ->
             CampaignDetails(
                 campaign = campaign,
-                applyDate = now.plusDays(i),
+                applyDate = v,
                 sellerStatus = SellerStatus.WAIT,
-                sortNo = i.toInt(),
+                sortNo = i,
                 recruitCount = dailyRecruitCount.toLong()
             )
         }
-        campaignDetailsRepository.saveAll(campaignDetails)
+        this.campaignDetailsRepository.saveAll(campaignDetails)
 
         // 캠페인 옵션 정보 등록
         val campaignOptions = request.options.mapIndexed { index, option ->
@@ -298,176 +307,120 @@ class BusinessService constructor(
     @Transactional
     @Throws(CampaignException::class)
     fun updateCampaign(request: UpdateCampaignRequestDTO): Boolean {
-
-        // 총 모집인원 계산
-        val dailyRecruitCount = request.options.sumOf {
-            when (request.optionType) {
-                OptionType.SINGLE -> it.recruitPeople
-                else -> it.subOption?.sumOf { subOption -> subOption.recruitPeople } ?: 0
-            }
-        }
-
-        // 활성화 기간 계산
-        val activeCount = maxOf(getLocalDateBetween(request.startSaleDateTime, request.endSaleDateTime), 1L)
-
-        // 일일 모집 인원 및 남은 모집 인원 계산
-        val totalRecruitCount = ( ( dailyRecruitCount ) * activeCount ).toInt()
-
-        // 캠페인 정보 조회
         val campaign = campaignRepository.findById(request.campaignId)
             .orElseThrow { throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST) }
 
-        // 캠페인이 대기중인 상태라면
-        if ( campaign.campaignStatus != CampaignStatus.WAIT ) {
-            throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_DUPLICATED)
+        val active = campaign.details.count {
+            it.sellerStatus != SellerStatus.WAIT
+         || it.sellerStatus != SellerStatus.ACTIVE
         }
 
-        val now = LocalDate.now()
+        if ( active > 0 ) { // 캠페인이 진행중 또는 활성
 
-        // 캠페인 정보 수정
-        campaign.companyName = request.companyName
-        campaign.campaignPlatform = request.platform
-        campaign.campaignTitle = request.productTitle
-        campaign.campaignStatus = CampaignStatus.WAIT
-        campaign.campaignCategory = request.category
-        campaign.campaignUrl = request.campaignLink
-        campaign.campaignImgUrl = request.campaignImgUrl
-        campaign.campaignPrice = request.campaignPrice
-        campaign.campaignProgressPrice = request.progressPrice
-        campaign.campaignTotalPrice = (request.campaignPrice + request.progressPrice) * totalRecruitCount
-        campaign.optionCount = request.options.size
-        campaign.reviewPoint = request.reviewPoint
-        campaign.totalRecruitCount = totalRecruitCount
-        campaign.activeDate = request.startSaleDateTime
-        campaign.finishDate = request.endSaleDateTime
-        campaign.sellerRequest = request.sellerRequest
-        campaign.sellerGuide = request.sellerGuide
-        campaign.dailyRecruitCount = dailyRecruitCount.toLong()
-        campaign.startTime = request.startTime
-        campaign.endTime = request.endTime
-        campaign.updateAt = LocalDateTime.now()
-
-        // 디테일 데이터 등록/수정/삭제
-
-        val currentDetailsData = campaign.details
-        val currentDetailsMap = currentDetailsData.associateBy { it.sortNo }
-
-        // 새로 등록할 디테일 데이터 생성
-        val newDetailsData = (0 until activeCount.toInt()).map { i ->
-            CampaignDetails(
-                campaign = campaign,
-                applyDate = now.plusDays(i.toLong()),
-                sellerStatus = SellerStatus.WAIT,
-                sortNo = i,
-                recruitCount = dailyRecruitCount.toLong()
-            )
         }
 
-        // 디테일 데이터 처리
-        newDetailsData.forEach { newDetail ->
-            val existingDetail = currentDetailsMap[newDetail.sortNo]
-            if (existingDetail != null) {
-                // 수정
-                existingDetail.apply {
-                    applyDate = newDetail.applyDate
-                    recruitCount = newDetail.recruitCount
-                }
-            } else {
-                // 추가
-                campaign.details.add(newDetail)
-            }
-        }
-
-        // 삭제할 기존 디테일 데이터
-        val detailsToRemove = currentDetailsMap.filterKeys { it !in newDetailsData.map { detail -> detail.sortNo } }
-        detailsToRemove.values.forEach { campaign.details.remove(it) }
-
-        val currentOptionsData = campaign.options
-        val currentOptionsMap = currentOptionsData.associateBy { it.order }
-
-        // 새로 등록할 디테일 데이터 생성
-        val newOptionsData = request.options.mapIndexed { index, option ->
-            CampaignOptions(
-                campaign = campaign,
-                title = option.optionTitle,
-                optionType = request.optionType,
-                order = index,
-                recruitPeople = when (request.optionType) {
-                    OptionType.SINGLE -> option.recruitPeople
-                    else -> option.subOption?.sumOf { it.recruitPeople } ?: 0
-                }
-            )
-        }
-
-        // 옵션 데이터 처리
-        newOptionsData.forEach { newOptions ->
-            val existingOptions = currentOptionsMap[newOptions.order]
-            if (existingOptions != null) {
-                // 수정
-                existingOptions.apply {
-                    title = newOptions.title
-                    optionType = newOptions.optionType
-                    order =  newOptions.order
-                    recruitPeople = newOptions.recruitPeople
-                }
-            } else {
-                // 추가
-                campaign.options.add(newOptions)
-            }
-        }
-
-        // 삭제할 기존 디테일 데이터
-        val optionsToRemove = currentOptionsMap.filterKeys { it !in newOptionsData.map { options -> options.order } }
-        optionsToRemove.values.forEach { campaign.options.remove(it) }
-
-        // 조합형 옵션의 하위 옵션 등록
-        val currentSubOptionsData = campaign.subOptions
-        val currentSubOptionsMap = currentSubOptionsData?.associateBy { it.order }
-
-        val newSubOptionsData = request.options.flatMapIndexed { index, option ->
-            val campaignOption = campaign.options[index]
-            option.subOption?.mapIndexed { subIndex, subOption ->
-                CampaignSubOptions(
-                    campaign = campaign,
-                    campaignOptions = campaignOption,
-                    title = subOption.subOptionTitle,
-                    order = subIndex,
-                    addPrice = subOption.addPrice,
-                    recruitPeople = subOption.recruitPeople
-                )
-            }.orEmpty()
-        }
-
-        // 옵션 데이터 처리
-        newSubOptionsData.forEach { newSubOptions ->
-            val existingOptions = currentSubOptionsMap?.get(newSubOptions.order)
-            if (existingOptions != null) {
-                // 수정
-                existingOptions.apply {
-                    title = newSubOptions.title
-                    campaignOptions = newSubOptions.campaignOptions
-                    order =  newSubOptions.order
-                    addPrice = newSubOptions.addPrice
-                    recruitPeople = newSubOptions.recruitPeople
-                    updateAt = LocalDateTime.now()
-                }
-            } else {
-                // 추가
-                campaign.subOptions?.add(newSubOptions)
-            }
-        }
-
-        // 삭제할 기존 디테일 데이터
-        val subOptionsToRemove = currentSubOptionsMap?.filterKeys { it !in newSubOptionsData.map { subOptions -> subOptions.order } }
-        subOptionsToRemove?.values?.forEach { campaign.subOptions!!.remove(it) }
-
-        this.campaignRepository.save(campaign)
+        request.companyName.let { campaign.companyName = it }
+        request.platform.let { campaign.campaignPlatform = it }
+        request.category.let { campaign.campaignCategory = it }
+        request.productTitle.let { campaign.campaignTitle = it }
+        request.campaignImgUrl.let { campaign.campaignImgUrl = it!! }
 
         return true
     }
 
+    /**
+     * 캠페인 날짜 추가하기
+     * @param request: 캠페인 일련번호
+     * @return 추가 여부
+     * @exception CampaignException
+     */
+    @Transactional
+    @Throws(CampaignException::class)
+    fun addToCampaignDetail(request: AddCampaignDetailRequestDTO): Boolean {
+        val campaign = campaignRepository.findById(request.campaignId)
+            .orElseThrow { throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST) }
 
+        val lastCampaignDetail = campaign.details
+            .last { !it.isDelete }
 
+        campaign.finishDate = if ( campaign?.isNotWorkDay == true ) {
+            DateUtil().adjustToNearestWeekDay(lastCampaignDetail.applyDate.plusDays(1))
+        }else {
+            lastCampaignDetail.applyDate.plusDays(1)
+        }
+
+        campaign.totalRecruitCount =  campaign.totalRecruitCount + lastCampaignDetail.recruitCount.toInt()
+
+        campaignDetailsRepository.save(CampaignDetails(
+            campaign = campaign,
+            applyDate = campaign.finishDate,
+            sellerStatus = SellerStatus.WAIT,
+            joinCount = 0,
+            isDelete = false,
+            sortNo = lastCampaignDetail.sortNo + 1,
+            recruitCount = lastCampaignDetail.recruitCount,
+        ))
+
+        return true
+    }
+
+    @Transactional
+    @Throws(CampaignException::class)
+    fun deleteCampaignDetail(campaignDetailsId: Long): Boolean {
+        val campaignDetails = campaignDetailsRepository.findById(campaignDetailsId)
+            .orElseThrow { throw CampaignException(CampaignError.CAMPAIGN_IS_NOT_EXIST) }
+
+        val campaign = campaignDetails.campaign
+
+        when ( campaignDetails.sellerStatus ) {
+            SellerStatus.WAIT -> {
+                val lastCampaign = campaignDetails.campaign?.details
+                    ?.last { !it.isDelete }
+
+                if (  lastCampaign?.applyDate == campaignDetails.applyDate ) {
+
+                    if ( campaignDetails.campaign.isNotWorkDay ) {
+                        campaignDetails.campaign.finishDate = DateUtil().adjustToBackNearestWeekDay(campaignDetails.applyDate.minusDays(1))
+                    }else {
+                        campaignDetails.campaign.finishDate = campaignDetails.applyDate.minusDays(1)
+                    }
+                }
+                val totalRecruitCount = campaign?.totalRecruitCount?.minus(campaignDetails.recruitCount)?.toInt()
+
+                if (totalRecruitCount != null) {
+                    campaignDetails.campaign.totalRecruitCount = if ( totalRecruitCount <= 0 ) 0 else totalRecruitCount
+                }
+
+                campaignDetails.isDelete = true
+                campaignDetails.updateAt = LocalDateTime.now()
+            }
+            SellerStatus.ACTIVE -> {
+                if ( campaignDetails.joinCount > 0 ) {
+                    throw CampaignException(CampaignError.CAMPAIGN_EXIST_JOIN_PEOPLE)
+                }else {
+                    val lastCampaign = campaignDetails.campaign?.details
+                        ?.last { !it.isDelete }
+                    if (  lastCampaign?.applyDate == campaignDetails.applyDate ) {
+
+                        if (campaignDetails.campaign.isNotWorkDay) {
+                            campaignDetails.campaign.finishDate =
+                                DateUtil().adjustToBackNearestWeekDay(campaignDetails.applyDate.minusDays(1))
+                        } else {
+                            campaignDetails.campaign.finishDate = campaignDetails.applyDate.minusDays(1)
+                        }
+                    }
+                    val totalRecruitCount = (( campaignDetails.campaign?.totalRecruitCount ?: 0 ) - campaignDetails.recruitCount ).toInt()
+                    campaignDetails.campaign?.totalRecruitCount = if ( totalRecruitCount < 0 ) 0 else totalRecruitCount
+                    campaignDetails.isDelete = true
+                    campaignDetails.updateAt = LocalDateTime.now()
+                }
+            }
+            else -> {
+                throw CampaignException(CampaignError.CAMPAIGN_DO_NOT_DELETE)
+            }
+        }
+        return true
+    }
 
 
     /**
@@ -517,7 +470,9 @@ class BusinessService constructor(
             )
             .from(qCampaign)
             .join(qCampaignDetails).on(qCampaignDetails.campaign.eq(qCampaign))
-            .where(qCampaign.id.eq(campaignId))
+            .where(qCampaign.id.eq(campaignId)
+                .and(qCampaignDetails.isDelete.eq(false))
+            )
 
         val addQuery = query.fetch()
             .map { dto ->
@@ -639,6 +594,7 @@ class BusinessService constructor(
         val qCampaign = QCampaign.campaign
         val qCampaignOptions = QCampaignOptions.campaignOptions
         val qCampaignSubOption = QCampaignSubOptions.campaignSubOptions
+        val qCampaignGuide = QCampaignGuide.campaignGuide
 
         val campaign = queryFactory
             .select(
@@ -658,10 +614,16 @@ class BusinessService constructor(
                     qCampaign.activeDate.`as`("startSaleDateTime"),
                     qCampaign.finishDate.`as`("endSaleDateTime"),
                     qCampaign.sellerRequest.`as`("sellerRequest"),
-                    qCampaign.sellerGuide.`as`("sellerGuide")
+                    Expressions.stringTemplate(
+                        "글자 수: {0} \n" +
+                                "강조 내용: {1}",
+                        qCampaignGuide.textLength,
+                        qCampaignGuide.strengthText,
+                    ).`as`("sellerGuide")
                 )
             )
             .from(qCampaign)
+            .join(qCampaignGuide).on(qCampaign.eq(qCampaignGuide.campaign))
             .where(qCampaign.id.eq(campaignId))
             .fetchOne()
 
@@ -796,7 +758,7 @@ class BusinessService constructor(
             }
         }
 
-        messageService.sendCampaignStart(campaignEnrolls.first().campaign!!, phoneNumber)
+        messageService.sendCampaignStart(campaignEnrolls.first().campaign!!,campaignEnrolls, phoneNumber)
 
         return true
     }
@@ -822,7 +784,11 @@ class BusinessService constructor(
             it.user?.userInfo?.phone
         }
 
-        messageService.sendCampaignStart(campaignDetails.campaign!!, phone)
+        val campaignEnrolls = campaignDetails.enroll.filter {
+            it.enrollStatus != EnrollStatus.CANCEL
+        }
+
+        messageService.sendCampaignStart(campaignDetails.campaign!!,campaignEnrolls, phone)
 
         campaignDetails.campaign.campaignStatus = CampaignStatus.PROGRESS
         campaignDetails.campaign.updateAt = LocalDateTime.now()
@@ -941,41 +907,6 @@ class BusinessService constructor(
             }
         }
         return true
-    }
-
-    @Transactional
-    @Throws(BasicException::class)
-    fun signup(request: AdminSignupRequestDTO): Boolean {
-        accountRepository.save(User(
-            registration = Registration.LOCAL,
-            email = request.loginId,
-            userPassword = passwordEncoder.encode(request.loginPw),
-            sid = UUID.randomUUID().toString(),
-            auth = UserRole.ROLE_ADMIN,
-        ))
-        return true
-    }
-
-    /**
-     * 어드민 계정 로그인
-     * @param request: SignInRequestDTO
-     * @return JwtToken: 토큰객체
-     * @exception BasicException
-     */
-    @Transactional
-    @Throws(BasicException::class)
-    fun login(request: SignInRequestDTO): JwtToken {
-        val user = accountRepository.findByEmailAndRegistration(request.loginId, Registration.LOCAL)
-            ?: throw BasicException(BasicError.USER_NOT_EXIST)
-
-        val authenticationToken = UsernamePasswordAuthenticationToken( user.id, request.password )
-
-        val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
-
-        val account = authentication.principal as User
-
-        return jwtTokenProvider.getJwtToken(account)
-
     }
 
     /**

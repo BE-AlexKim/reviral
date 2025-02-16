@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.api.account.repository.UserInfoRepository
 import tech.server.reviral.api.campaign.model.entity.Campaign
+import tech.server.reviral.api.campaign.model.entity.CampaignEnroll
 import tech.server.reviral.common.config.response.exception.BasicException
 import tech.server.reviral.common.config.response.exception.enums.BasicError
 import tech.server.reviral.common.config.security.JwtRedisRepository
@@ -93,7 +94,7 @@ class MessageService constructor(
 
     @Transactional
     @Throws(BasicException::class)
-    fun sendCampaignStart(campaign: Campaign, phoneNumbers: List<String>): Boolean {
+    fun sendCampaignStart(campaign: Campaign, campaignErolls: List<CampaignEnroll>, phoneNumbers: List<String>): Boolean {
 
         val campaignTitle = campaign.campaignTitle
         val campaignPrice = campaign.campaignPrice
@@ -101,7 +102,7 @@ class MessageService constructor(
         val totalPrice = campaignPrice + campaignPoint
 
         val variables = mutableMapOf<String, String>()
-        variables["#{title}"] = (campaignTitle ?: "캠페인 명 오류").substring(0,10)
+        variables["#{title}"] = getTitle(campaignTitle ?: "캠페인 명 오류")
         variables["#{price}"] = NumberFormat.getNumberInstance(Locale.KOREA).format(campaignPrice)
         variables["#{point}"] = NumberFormat.getNumberInstance(Locale.KOREA).format(campaignPoint)
         variables["#{total}"] = NumberFormat.getNumberInstance(Locale.KOREA).format(totalPrice)
@@ -118,7 +119,7 @@ class MessageService constructor(
             )
         }
 
-        sendCampaignGuides(campaign, phoneNumbers)
+        sendCampaignGuides(campaign,campaignErolls, phoneNumbers)
 
         messageService.send(messages)
 
@@ -126,13 +127,17 @@ class MessageService constructor(
     }
 
     @Throws(BasicException::class)
-    private fun sendCampaignGuides(campaign: Campaign, phoneNumbers: List<String?>) {
+    private fun sendCampaignGuides(campaign: Campaign, campaignEnroll: List<CampaignEnroll>, phoneNumbers: List<String?>) {
 
         val phones = phoneNumbers.filterNotNull().map { it.replace("-","").trim() }
 
         val userInfoList = userInfoRepository.findByPhoneIn(phones)
 
         val phoneToUserInfoMap = userInfoList.associateBy { it.phone }
+
+        val campaignGuide = campaign.guide
+
+        val enrollOption = campaignEnroll.associateBy{ it.user?.userInfo?.phone }
 
         val messages = phones.mapNotNull { phoneNumber ->
             val userInfo = phoneToUserInfoMap[phoneNumber] ?: return@mapNotNull null
@@ -142,12 +147,17 @@ class MessageService constructor(
                 subject = "리바이럴 구매 가이드 안내",
                 from = messageProperties.nurigo.from,
                 to = phoneNumber,
-                text = " 캠페인 준수사항 \n"
-                    + "${getHtmlToText(campaign.sellerGuide!!)} \n"
-                    + "캠페인 요청사항 \n"
-                    + "${getHtmlToText(campaign.sellerRequest)} \n\n"
-                    + "구매링크 : ${campaign.campaignUrl} \n\n"
-                    + "등록링크 : https://reviral.kr/campaign \n"
+                text = "구매 가이드 \n\n"
+                    + "구매 옵션1 :${enrollOption[phoneNumber]?.options?.title ?: "없음"} \n"
+                    + "구매 옵션2 :${enrollOption[phoneNumber]?.subOptions?.title ?: "없음"} \n"
+                    + "구매 개수 : 1개 \n\n"
+                    + "준수 사항 \n"
+                    + "글자 수 : ${campaignGuide?.textLength ?: "없음"} \n"
+                    + "등록 조건 : ${campaignGuide?.condition ?: "없음"} \n"
+                    + "기타 사항 : ${campaignGuide?.etcText ?: "없음"} \n"
+                    + "강조 내용 : \n${campaignGuide?.strengthText ?: "없음"} \n\n"
+                    + "구매 링크 : ${campaign.campaignUrl} \n\n"
+                    + "등록 링크 : \nhttps://reviral.kr/campaign \n"
             )
         }
         messageService.send(messages)
@@ -155,5 +165,14 @@ class MessageService constructor(
 
     private fun getHtmlToText(input: String): String {
         return Jsoup.parse(input).text() + "\n"
+    }
+
+    private fun getTitle(campaignTitle: String): String {
+        val length = campaignTitle.length
+        return if ( length > 10 ) {
+            campaignTitle.substring(0,10)
+        }else {
+            campaignTitle
+        }
     }
 }

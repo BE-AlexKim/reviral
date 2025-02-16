@@ -12,6 +12,9 @@ package tech.server.reviral.common.config.response.exception.message
  * 2024-12-03        joy58       최초 생성
  */
 object CampaignExceptionMessage {
+    const val CAMPAIGN_EXIST_JOIN_PEOPLE = "등록한 인원이 존재합니다. 삭제할 수 없습니다."
+    const val CAMPAIGN_DO_NOT_DELETE = "진행중이거나 완료된 캠페인은 삭제할 수 없습니다."
+    const val CAMPAIGN_STATUS_PROGRESS = "진행중인 캠페인에는 참여 하실 수 없습니다."
     const val CAMPAIGN_MODIFY_IMPOSSIBLE = "캠페인이 시작되었다면, 수정이 불가능합니다."
     const val CAMPAIGN_ENROLL_NOT_MATCH = "캠페인 참여자와 일치하지 않습니다."
     const val CAMPAIGN_STATUS_NOT_WAIT = "캠페인이 대기중인 상태만 변경가능합니다."
