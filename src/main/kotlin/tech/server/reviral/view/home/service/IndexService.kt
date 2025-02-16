@@ -19,10 +19,10 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class IndexService{
 
-    @Transactional
-    fun findAll(pageable: Pageable): Page<Map<String, Any>> {
-
-    }
+//    @Transactional
+//    fun findAll(pageable: Pageable): Page<Map<String, Any>> {
+//
+//    }
 
 
 
