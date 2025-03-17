@@ -25,11 +25,11 @@ import tech.server.reviral.api.campaign.model.enums.SellerStatus
 import tech.server.reviral.api.campaign.repository.CampaignDetailsRepository
 import tech.server.reviral.api.campaign.repository.CampaignRepository
 import tech.server.reviral.api.oauth.config.OAuthProperties
-import tech.server.reviral.common.config.mail.EmailService
-import tech.server.reviral.common.config.message.MessageService
+import tech.server.reviral.config.mail.EmailService
+import tech.server.reviral.config.message.MessageService
 import tech.server.reviral.api.oauth.service.OAuthService
-import tech.server.reviral.common.config.response.exception.CampaignException
-import tech.server.reviral.common.config.response.exception.enums.CampaignError
+import tech.server.reviral.config.response.exception.CampaignException
+import tech.server.reviral.config.response.exception.enums.CampaignError
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime

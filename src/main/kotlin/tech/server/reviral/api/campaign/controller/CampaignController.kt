@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.campaign.service.CampaignService
-import tech.server.reviral.common.config.docs.campaign.*
-import tech.server.reviral.common.config.response.success.WrapResponseEntity
+import tech.server.reviral.config.docs.campaign.*
+import tech.server.reviral.config.response.success.WrapResponseEntity
 
 /**
  *packageName    : tech.server.reviral.api.campaign.controller

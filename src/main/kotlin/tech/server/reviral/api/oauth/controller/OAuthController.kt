@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController
 import tech.server.reviral.api.account.model.enums.Registration
 import tech.server.reviral.api.oauth.model.dto.ExpireUser
 import tech.server.reviral.api.oauth.service.OAuthService
-import tech.server.reviral.common.config.docs.oauth.OAuthSignupExplain
-import tech.server.reviral.common.config.docs.oauth.OAuthUnlinkExplain
-import tech.server.reviral.common.config.response.success.WrapResponseEntity
-import tech.server.reviral.common.config.security.JwtToken
-import tech.server.reviral.common.config.security.JwtTokenProvider
+import tech.server.reviral.config.docs.oauth.OAuthSignupExplain
+import tech.server.reviral.config.docs.oauth.OAuthUnlinkExplain
+import tech.server.reviral.config.response.success.WrapResponseEntity
+import tech.server.reviral.config.security.JwtToken
+import tech.server.reviral.config.security.JwtTokenProvider
 
 /**
  *packageName    : tech.server.reviral.common.config.oauth

@@ -7,12 +7,12 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import tech.server.reviral.api.account.model.dto.*
 import tech.server.reviral.api.account.service.AccountService
-import tech.server.reviral.common.config.docs.account.*
-import tech.server.reviral.common.config.message.MessageService
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.response.success.WrapResponseEntity
-import tech.server.reviral.common.config.security.JwtToken
+import tech.server.reviral.config.docs.account.*
+import tech.server.reviral.config.message.MessageService
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.response.success.WrapResponseEntity
+import tech.server.reviral.config.security.JwtToken
 
 /**
  *packageName    : tech.server.reviral.api.account.controller

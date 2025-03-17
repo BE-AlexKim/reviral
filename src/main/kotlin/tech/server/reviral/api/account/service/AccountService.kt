@@ -16,11 +16,11 @@ import tech.server.reviral.api.account.repository.UserInfoRepository
 import tech.server.reviral.api.oauth.model.OAuthUserInfo
 import tech.server.reviral.api.point.model.entity.Point
 import tech.server.reviral.api.point.repository.PointRepository
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.security.JwtRedisRepository
-import tech.server.reviral.common.config.security.JwtToken
-import tech.server.reviral.common.config.security.JwtTokenProvider
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.security.JwtRedisRepository
+import tech.server.reviral.config.security.JwtToken
+import tech.server.reviral.config.security.JwtTokenProvider
 import java.time.LocalDateTime
 
 /**

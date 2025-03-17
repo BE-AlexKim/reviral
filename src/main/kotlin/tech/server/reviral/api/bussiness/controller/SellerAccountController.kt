@@ -10,9 +10,9 @@ import tech.server.reviral.api.account.model.dto.SignInRequestDTO
 import tech.server.reviral.api.bussiness.model.dto.AdminSignupRequestDTO
 import tech.server.reviral.api.bussiness.model.dto.ReviewerInfoResponseDTO
 import tech.server.reviral.api.bussiness.service.SellerAccountService
-import tech.server.reviral.common.config.docs.bussiness.ReviewerInfoExplain
-import tech.server.reviral.common.config.response.success.WrapResponseEntity
-import tech.server.reviral.common.config.security.JwtToken
+import tech.server.reviral.config.docs.bussiness.ReviewerInfoExplain
+import tech.server.reviral.config.response.success.WrapResponseEntity
+import tech.server.reviral.config.security.JwtToken
 
 /**
  *packageName    : tech.server.reviral.api.bussiness.controller

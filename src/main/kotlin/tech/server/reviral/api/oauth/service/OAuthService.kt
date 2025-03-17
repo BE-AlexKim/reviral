@@ -21,9 +21,9 @@ import tech.server.reviral.api.account.service.AccountService
 import tech.server.reviral.api.oauth.config.OAuthProperties
 import tech.server.reviral.api.oauth.model.OAuthToken
 import tech.server.reviral.api.oauth.model.dto.*
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.security.JwtToken
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.security.JwtToken
 import java.time.LocalDateTime
 
 /**

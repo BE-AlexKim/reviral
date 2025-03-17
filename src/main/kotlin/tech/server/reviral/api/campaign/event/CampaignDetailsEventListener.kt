@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 import tech.server.reviral.api.campaign.model.entity.CampaignDetails
 import tech.server.reviral.api.campaign.model.enums.SellerStatus
 import tech.server.reviral.api.campaign.repository.CampaignDetailsRepository
-import tech.server.reviral.common.config.response.exception.CampaignException
+import tech.server.reviral.config.response.exception.CampaignException
 import java.time.LocalDateTime
 
 /**

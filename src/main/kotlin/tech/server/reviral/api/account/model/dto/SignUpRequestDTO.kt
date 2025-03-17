@@ -5,8 +5,8 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.validation.constraints.Pattern
 import tech.server.reviral.api.account.model.enums.Gender
-import tech.server.reviral.common.config.validation.Credentials
-import tech.server.reviral.common.config.validation.Username
+import tech.server.reviral.config.validation.Credentials
+import tech.server.reviral.config.validation.Username
 
 /**
  *packageName    : tech.server.reviral.api.account.model.dto

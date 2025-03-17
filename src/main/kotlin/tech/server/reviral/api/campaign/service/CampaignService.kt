@@ -22,13 +22,12 @@ import tech.server.reviral.api.point.model.enums.PointStatus
 import tech.server.reviral.api.point.repository.PointAttributeRepository
 import tech.server.reviral.api.point.repository.PointExchangeRepository
 import tech.server.reviral.api.point.repository.PointRepository
-import tech.server.reviral.common.config.aws.AmazonS3Service
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.CampaignException
-import tech.server.reviral.common.config.response.exception.PointException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.response.exception.enums.CampaignError
-import tech.server.reviral.common.config.response.exception.enums.PointError
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.CampaignException
+import tech.server.reviral.config.response.exception.PointException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.response.exception.enums.CampaignError
+import tech.server.reviral.config.response.exception.enums.PointError
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -54,7 +53,7 @@ class CampaignService constructor(
     private val pointAttributeRepository: PointAttributeRepository,
     private val pointExchangeRepository: PointExchangeRepository,
     private val queryFactory: JPAQueryFactory,
-    private val amazonS3Service: AmazonS3Service,
+    private val amazonS3Service: tech.server.reviral.config.aws.AmazonS3Service,
     private val applicationEventPublisher: ApplicationEventPublisher
 ){
 

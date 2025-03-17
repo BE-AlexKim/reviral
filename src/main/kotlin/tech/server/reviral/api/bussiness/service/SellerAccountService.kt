@@ -15,10 +15,10 @@ import tech.server.reviral.api.account.model.enums.UserRole
 import tech.server.reviral.api.account.repository.AccountRepository
 import tech.server.reviral.api.bussiness.model.dto.AdminSignupRequestDTO
 import tech.server.reviral.api.bussiness.model.dto.ReviewerInfoResponseDTO
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.security.JwtToken
-import tech.server.reviral.common.config.security.JwtTokenProvider
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.security.JwtToken
+import tech.server.reviral.config.security.JwtTokenProvider
 import java.util.*
 
 /**

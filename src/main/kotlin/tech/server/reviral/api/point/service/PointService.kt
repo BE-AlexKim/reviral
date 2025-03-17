@@ -9,11 +9,11 @@ import tech.server.reviral.api.point.model.entity.PointExchange
 import tech.server.reviral.api.point.model.enums.ExchangeStatus
 import tech.server.reviral.api.point.repository.PointExchangeRepository
 import tech.server.reviral.api.point.repository.PointRepository
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.PointException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.response.exception.enums.PointError
-import tech.server.reviral.common.util.AESEncryption
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.PointException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.response.exception.enums.PointError
+import tech.server.reviral.common.AESEncryption
 import java.time.LocalDateTime
 
 /**

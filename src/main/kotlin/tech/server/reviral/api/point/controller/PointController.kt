@@ -8,9 +8,9 @@ import tech.server.reviral.api.point.model.dto.ExchangePointRequestDTO
 import tech.server.reviral.api.point.model.dto.PointAttributeResponseDTO
 import tech.server.reviral.api.point.model.dto.PointExchangeResponseDTO
 import tech.server.reviral.api.point.service.PointService
-import tech.server.reviral.common.config.docs.point.ExchangePointExplain
-import tech.server.reviral.common.config.docs.point.PointAttributeExplain
-import tech.server.reviral.common.config.response.success.WrapResponseEntity
+import tech.server.reviral.config.docs.point.ExchangePointExplain
+import tech.server.reviral.config.docs.point.PointAttributeExplain
+import tech.server.reviral.config.response.success.WrapResponseEntity
 
 /**
  *packageName    : tech.server.reviral.api.point.controller

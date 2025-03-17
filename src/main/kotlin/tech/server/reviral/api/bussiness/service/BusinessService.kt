@@ -25,16 +25,16 @@ import tech.server.reviral.api.point.model.enums.ExchangeStatus
 import tech.server.reviral.api.point.model.enums.PointStatus
 import tech.server.reviral.api.point.repository.PointExchangeRepository
 import tech.server.reviral.api.point.repository.PointRepository
-import tech.server.reviral.common.config.aws.AmazonS3Service
-import tech.server.reviral.common.config.message.MessageService
-import tech.server.reviral.common.util.AESEncryption
-import tech.server.reviral.common.config.response.exception.BasicException
-import tech.server.reviral.common.config.response.exception.CampaignException
-import tech.server.reviral.common.config.response.exception.PointException
-import tech.server.reviral.common.config.response.exception.enums.BasicError
-import tech.server.reviral.common.config.response.exception.enums.CampaignError
-import tech.server.reviral.common.config.response.exception.enums.PointError
-import tech.server.reviral.common.util.DateUtil
+import tech.server.reviral.config.aws.AmazonS3Service
+import tech.server.reviral.config.message.MessageService
+import tech.server.reviral.common.AESEncryption
+import tech.server.reviral.config.response.exception.BasicException
+import tech.server.reviral.config.response.exception.CampaignException
+import tech.server.reviral.config.response.exception.PointException
+import tech.server.reviral.config.response.exception.enums.BasicError
+import tech.server.reviral.config.response.exception.enums.CampaignError
+import tech.server.reviral.config.response.exception.enums.PointError
+import tech.server.reviral.common.DateUtil
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
@@ -62,7 +62,7 @@ class BusinessService constructor(
     private val campaignEnrollRepository: CampaignEnrollRepository,
     private val pointRepository: PointRepository,
     private val accountRepository: AccountRepository,
-    private val amazonS3Service: AmazonS3Service,
+    private val amazonS3Service: tech.server.reviral.config.aws.AmazonS3Service,
     private val pointExchangeRepository: PointExchangeRepository,
     private val messageService: MessageService,
     private val campaignGuideRepository: CampaignGuideRepository

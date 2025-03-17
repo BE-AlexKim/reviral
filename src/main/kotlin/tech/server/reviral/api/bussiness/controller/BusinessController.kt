@@ -14,10 +14,10 @@ import tech.server.reviral.api.bussiness.model.enums.ImageCheck
 import tech.server.reviral.api.bussiness.service.BusinessService
 import tech.server.reviral.api.campaign.model.dto.*
 import tech.server.reviral.api.point.model.dto.PointExchangeResponseDTO
-import tech.server.reviral.common.config.docs.bussiness.*
-import tech.server.reviral.common.config.docs.campaign.*
-import tech.server.reviral.common.config.response.success.WrapResponseEntity
-import tech.server.reviral.common.config.security.JwtToken
+import tech.server.reviral.config.docs.bussiness.*
+import tech.server.reviral.config.docs.campaign.*
+import tech.server.reviral.config.response.success.WrapResponseEntity
+import tech.server.reviral.config.security.JwtToken
 import kotlin.math.sign
 
 /**
