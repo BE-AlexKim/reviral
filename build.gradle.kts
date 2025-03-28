@@ -6,6 +6,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.6"
 	kotlin("plugin.jpa") version "1.9.25"
 	kotlin("kapt") version "1.9.25"
+	jacoco
 	idea
 }
 
@@ -125,4 +126,21 @@ kapt {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.test {
+	finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+	dependsOn(tasks.test)
+	reports {
+		html.required.set(true)
+		xml.required.set(true)
+		csv.required.set(false)
+	}
+}
+
+jacoco {
+	toolVersion = "0.8.8"
 }
